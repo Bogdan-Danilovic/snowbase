@@ -1,0 +1,848 @@
+/* ==========================================================================
+   Peak & Palm — Alpine Noir
+   Estetika: Editorial luksuz × sirova planinska atmosfera
+   Fontovi: Cormorant Garamond (display serif) + Outfit (body)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap');
+
+/* --------------------------------------------------------------------------
+   1. CSS Custom Properties
+   -------------------------------------------------------------------------- */
+:root {
+    /* Pozadine */
+    --void:          #04060d;
+    --abyss:         #070c18;
+    --surface:       #0c1220;
+    --surface-hover: #111826;
+    --surface-raised:#141d2e;
+
+    /* Tekst */
+    --text-primary:  #e4ecf5;
+    --text-secondary:#7a8a9e;
+    --text-muted:    #3d4f65;
+
+    /* Akcent boje */
+    --ice:           #00e5ff;
+    --ice-soft:      rgba(0, 229, 255, 0.08);
+    --ice-glow:      rgba(0, 229, 255, 0.18);
+    --frost:         rgba(0, 229, 255, 0.04);
+    --gold:          #f0c070;
+
+    /* Ivice */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-card:   rgba(255, 255, 255, 0.09);
+    --border-hover:  rgba(0, 229, 255, 0.38);
+
+    /* Senke */
+    --shadow-card:  0 20px 60px rgba(0, 0, 0, 0.55);
+    --shadow-hover: 0 28px 70px rgba(0, 0, 0, 0.65),
+                    0 0  50px rgba(0, 229, 255, 0.07);
+    --glow-ice:     0 0 30px rgba(0, 229, 255, 0.25);
+
+    /* Easing */
+    --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Zaobljenost */
+    --r-sm:  8px;
+    --r-md:  14px;
+    --r-lg:  20px;
+    --r-xl:  28px;
+    --r-pill:100px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset & Osnova
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    background-color: var(--void);
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    font-size: 1rem;
+    line-height: 1.7;
+    overflow-x: hidden;
+    min-height: 100vh;
+    /* Grain tekstura */
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------------
+   3. Custom Kursor
+   (HTML: dodaj <div class="cursor-dot"></div><div class="cursor-ring"></div>)
+   -------------------------------------------------------------------------- */
+.cursor-dot {
+    position: fixed;
+    width: 5px;
+    height: 5px;
+    background: var(--ice);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s;
+    box-shadow: 0 0 8px var(--ice), 0 0 18px rgba(0, 229, 255, 0.6);
+    will-change: transform;
+}
+
+.cursor-ring {
+    position: fixed;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition:
+        width  0.35s var(--ease-out),
+        height 0.35s var(--ease-out),
+        border-color 0.35s,
+        background 0.35s;
+    will-change: transform;
+}
+
+.cursor-ring.hovering {
+    width: 52px;
+    height: 52px;
+    border-color: rgba(0, 229, 255, 0.65);
+    background: rgba(0, 229, 255, 0.05);
+}
+
+/* --------------------------------------------------------------------------
+   4. Pozadinski Sistem — Aurora Mesh
+   -------------------------------------------------------------------------- */
+.fixed-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -2;
+    background: var(--void);
+    overflow: hidden;
+}
+
+/* Sloj 1 — topli plavi sjaj */
+.fixed-bg::before {
+    content: '';
+    position: absolute;
+    inset: -40%;
+    background:
+        radial-gradient(ellipse 80% 55% at 18% 28%,
+            rgba(0, 90, 140, 0.22) 0%, transparent 58%),
+        radial-gradient(ellipse 60% 45% at 82% 72%,
+            rgba(0, 50, 100, 0.18) 0%, transparent 58%),
+        radial-gradient(ellipse 70% 35% at 50% 2%,
+            rgba(0, 130, 170, 0.1)  0%, transparent 50%);
+    animation: aurora-drift 22s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+/* Sloj 2 — hladni ice naglasci */
+.fixed-bg::after {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    background:
+        radial-gradient(ellipse 45% 30% at 72% 18%,
+            rgba(0, 229, 255, 0.035) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 40% at 28% 82%,
+            rgba(20, 60, 120, 0.14) 0%, transparent 58%);
+    animation: aurora-drift 30s ease-in-out infinite alternate-reverse;
+    will-change: transform;
+}
+
+@keyframes aurora-drift {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    35%  { transform: translate(2%, 3.5%) rotate(1.5deg) scale(1.02); }
+    70%  { transform: translate(-1.5%, 2%) rotate(-1deg) scale(0.99); }
+    100% { transform: translate(1%, -2%) rotate(0.5deg) scale(1.01); }
+}
+
+/* --------------------------------------------------------------------------
+   5. Navigacija
+   -------------------------------------------------------------------------- */
+nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 24px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 500;
+    background: linear-gradient(
+        to bottom,
+        rgba(4, 6, 13, 0.85) 0%,
+        rgba(4, 6, 13, 0.0)  100%
+    );
+    transition:
+        background    0.5s var(--ease-out),
+        padding       0.4s var(--ease-out),
+        border-color  0.4s,
+        backdrop-filter 0.4s;
+    border-bottom: 1px solid transparent;
+}
+
+nav.scrolled {
+    background: rgba(4, 6, 13, 0.88);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    padding: 16px 60px;
+    border-bottom-color: var(--border-subtle);
+}
+
+/* Logo */
+nav > a,
+.logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.65rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: opacity 0.3s;
+}
+
+nav > a:hover,
+.logo:hover { opacity: 0.85; }
+
+nav > a span,
+.logo span {
+    color: var(--ice);
+    display: inline-block;
+    animation: logo-breathe 5s ease-in-out infinite;
+}
+
+@keyframes logo-breathe {
+    0%, 100% { text-shadow: none; opacity: 1; }
+    50%       { text-shadow: 0 0 22px var(--ice), 0 0 8px rgba(0,229,255,0.5); opacity: 0.9; }
+}
+
+/* Nav linkovi */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-links a {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 7px 18px;
+    border-radius: var(--r-pill);
+    border: 1px solid transparent;
+    transition: color 0.3s, border-color 0.3s, background 0.3s;
+    position: relative;
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 18px;
+    right: 18px;
+    height: 1px;
+    background: var(--ice);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s var(--ease-out);
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    background: rgba(255,255,255,0.03);
+}
+
+.nav-links a.active::after,
+.nav-links a:hover::after {
+    transform: scaleX(1);
+}
+
+/* --------------------------------------------------------------------------
+   6. Kontejner
+   -------------------------------------------------------------------------- */
+.container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 148px 40px 90px;
+}
+
+/* --------------------------------------------------------------------------
+   7. Katalog Header
+   -------------------------------------------------------------------------- */
+.catalog-header {
+    text-align: center;
+    margin-bottom: 72px;
+    position: relative;
+    animation: fade-up 0.9s var(--ease-out) both;
+}
+
+/* Ambijentalni glow iza headera */
+.catalog-header::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 350px;
+    background: radial-gradient(ellipse,
+        rgba(0, 229, 255, 0.04) 0%, transparent 68%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Tag/badge iznad naslova */
+.catalog-header > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ice);
+    padding: 6px 18px;
+    border: 1px solid rgba(0, 229, 255, 0.22);
+    border-radius: var(--r-pill);
+    background: rgba(0, 229, 255, 0.04);
+    margin-bottom: 22px;
+    animation: fade-down 0.8s var(--ease-out) 0.1s both;
+}
+
+.catalog-header > span::before {
+    content: '';
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--ice);
+    box-shadow: 0 0 8px var(--ice);
+    animation: dot-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.5); opacity: 0.6; }
+}
+
+.catalog-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.12;
+    color: var(--text-primary);
+    animation: fade-up 0.9s var(--ease-out) 0.2s both;
+}
+
+.catalog-header h1 strong {
+    font-weight: 600;
+    font-style: italic;
+    color: var(--ice);
+}
+
+.catalog-header p {
+    font-size: 0.92rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 18px auto 0;
+    line-height: 1.85;
+    animation: fade-up 0.9s var(--ease-out) 0.3s both;
+}
+
+/* --------------------------------------------------------------------------
+   8. Grid Destinacija
+   -------------------------------------------------------------------------- */
+.dest-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 26px;
+}
+
+/* --------------------------------------------------------------------------
+   9. Kartica Destinacije
+   -------------------------------------------------------------------------- */
+.dest-card {
+    background: var(--surface);
+    border: 1px solid var(--border-card);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    isolation: isolate;
+    transition:
+        border-color 0.4s var(--ease-out),
+        transform    0.45s var(--ease-out),
+        box-shadow   0.45s var(--ease-out);
+}
+
+/* Frost corner — geometrijski detalj u gornjem desnom uglu */
+.dest-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; right: -1px;
+    width: 50px; height: 50px;
+    border-top:   1.5px solid transparent;
+    border-right: 1.5px solid transparent;
+    border-top-right-radius: var(--r-lg);
+    transition:
+        border-color 0.45s var(--ease-out),
+        width  0.45s var(--ease-out),
+        height 0.45s var(--ease-out);
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* Glow sloj iza kartice */
+.dest-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--r-lg);
+    background: transparent;
+    transition: background 0.5s var(--ease-out);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.dest-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-7px) scale(1.006);
+    box-shadow: var(--shadow-hover);
+}
+
+.dest-card:hover::before {
+    border-top-color:   var(--ice);
+    border-right-color: var(--ice);
+    width:  80px;
+    height: 80px;
+}
+
+.dest-card:hover::after {
+    background: radial-gradient(ellipse at 60% 0%,
+        rgba(0, 229, 255, 0.06) 0%, transparent 60%);
+}
+
+/* --------------------------------------------------------------------------
+   10. Slika Kartice
+   -------------------------------------------------------------------------- */
+.dest-img-container {
+    position: relative;
+    width: 100%;
+    height: 215px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.dest-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition:
+        transform 0.9s var(--ease-out),
+        filter    0.5s var(--ease-out);
+    filter: saturate(0.6) brightness(0.82);
+    transform-origin: center;
+}
+
+.dest-card:hover .dest-img {
+    transform: scale(1.1);
+    filter: saturate(0.88) brightness(0.95);
+}
+
+/* Gradient fade na dnu slike */
+.dest-img-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(12, 18, 32, 0.7) 75%,
+        var(--surface) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Linija svetlosti pri vrhu slike na hover */
+.dest-img-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; right: 0;
+    height: 2px;
+    background: linear-gradient(to right,
+        transparent, var(--ice), transparent);
+    z-index: 2;
+    transition: left 0.6s var(--ease-out);
+}
+
+.dest-card:hover .dest-img-container::before {
+    left: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   11. Telo Kartice
+   -------------------------------------------------------------------------- */
+.dest-body {
+    padding: 28px 30px 30px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+}
+
+.dest-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 10px;
+    transition: color 0.3s;
+}
+
+.dest-card:hover .dest-title {
+    color: #fff;
+}
+
+.dest-desc {
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 26px;
+    flex-grow: 1;
+}
+
+/* --------------------------------------------------------------------------
+   12. Meta Statistike
+   -------------------------------------------------------------------------- */
+.dest-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 20px;
+    margin-bottom: 24px;
+    gap: 6px;
+}
+
+.meta-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+/* Vertikalni separator između stavki */
+.meta-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 12%;
+    height: 76%;
+    width: 1px;
+    background: var(--border-subtle);
+}
+
+.meta-item span {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.meta-item strong {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--ice);
+    display: block;
+    line-height: 1;
+    transition: text-shadow 0.4s;
+}
+
+.dest-card:hover .meta-item strong {
+    text-shadow: var(--glow-ice);
+}
+
+/* --------------------------------------------------------------------------
+   13. Dugme — CTA
+   -------------------------------------------------------------------------- */
+.btn-view {
+    display: block;
+    text-align: center;
+    width: 100%;
+    padding: 13px 22px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-card);
+    border-radius: var(--r-sm);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition:
+        color        0.35s var(--ease-out),
+        border-color 0.35s;
+    isolation: isolate;
+}
+
+/* Fill koji raste od dna */
+.btn-view::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(
+        to top,
+        var(--ice) 0%,
+        rgba(0, 195, 225, 0.92) 100%
+    );
+    transition: height 0.45s var(--ease-out);
+    z-index: -1;
+}
+
+/* Shimmer prelaz */
+.btn-view::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -80%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent);
+    transition: left 0.55s var(--ease-out);
+    z-index: 0;
+}
+
+.dest-card:hover .btn-view {
+    color: #03080f;
+    border-color: var(--ice);
+}
+
+.dest-card:hover .btn-view::before {
+    height: 100%;
+}
+
+.dest-card:hover .btn-view::after {
+    left: 130%;
+}
+
+/* --------------------------------------------------------------------------
+   14. Reveal Animacija (Scroll)
+   -------------------------------------------------------------------------- */
+.reveal {
+    opacity: 0;
+    transform: translateY(38px);
+    filter: blur(5px);
+    transition:
+        opacity   0.72s var(--ease-out),
+        transform 0.72s var(--ease-out),
+        filter    0.72s var(--ease-out);
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
+
+/* Kaskadni kašnjenje za grid kartice */
+.dest-grid .dest-card:nth-child(1) { transition-delay: 0.00s; }
+.dest-grid .dest-card:nth-child(2) { transition-delay: 0.08s; }
+.dest-grid .dest-card:nth-child(3) { transition-delay: 0.16s; }
+.dest-grid .dest-card:nth-child(4) { transition-delay: 0.24s; }
+.dest-grid .dest-card:nth-child(5) { transition-delay: 0.32s; }
+.dest-grid .dest-card:nth-child(6) { transition-delay: 0.40s; }
+.dest-grid .dest-card:nth-child(7) { transition-delay: 0.48s; }
+.dest-grid .dest-card:nth-child(8) { transition-delay: 0.56s; }
+
+/* --------------------------------------------------------------------------
+   15. Glassmorphism Utility
+   -------------------------------------------------------------------------- */
+.glass {
+    background: rgba(12, 18, 32, 0.72);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid var(--border-card);
+    border-radius: var(--r-lg);
+}
+
+/* --------------------------------------------------------------------------
+   16. Sistem Dugmadi (legacy kompatibilnost)
+   -------------------------------------------------------------------------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 28px;
+    border-radius: var(--r-sm);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.32s var(--ease-out);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--ice);
+    color: #03080f;
+    box-shadow: 0 0 0 rgba(0, 229, 255, 0);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 229, 255, 0.35);
+    filter: brightness(1.06);
+}
+
+/* --------------------------------------------------------------------------
+   17. Zajedničke Keyframe Animacije
+   -------------------------------------------------------------------------- */
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-down {
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   18. Scrollbar
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: var(--void); }
+::-webkit-scrollbar-thumb  {
+    background: rgba(0, 229, 255, 0.18);
+    border-radius: var(--r-pill);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.38); }
+
+/* --------------------------------------------------------------------------
+   19. Selekcija teksta
+   -------------------------------------------------------------------------- */
+::selection {
+    background: rgba(0, 229, 255, 0.18);
+    color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   20. Responsive — Tablet
+   -------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+    nav,
+    nav.scrolled { padding-inline: 32px; }
+
+    .container { padding: 130px 28px 70px; }
+
+    .dest-grid {
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 20px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   21. Responsive — Mobilni
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+    .cursor-dot,
+    .cursor-ring  { display: none; }
+
+    nav,
+    nav.scrolled  { padding: 18px 22px; }
+
+    .container    { padding: 108px 18px 56px; }
+
+    .catalog-header h1 { font-size: 2.1rem; }
+
+    .dest-grid    { grid-template-columns: 1fr; gap: 18px; }
+
+    .dest-title   { font-size: 1.55rem; }
+
+    .dest-body    { padding: 22px 22px 24px; }
+}
+
+/* --------------------------------------------------------------------------
+   NAPOMENA — Dodaj ovaj JS snippet u index.php i destinacija.php
+   (pre </body> taga, zamenjuje stari script blok):
+
+   <div class="cursor-dot" id="cd"></div>
+   <div class="cursor-ring" id="cr"></div>
+   <script>
+     const cd = document.getElementById('cd');
+     const cr = document.getElementById('cr');
+     let mx = 0, my = 0, rx = 0, ry = 0;
+     window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+     (function loop() {
+       rx += (mx - rx) * 0.15;
+       ry += (my - ry) * 0.15;
+       cd.style.left = mx + 'px';
+       cd.style.top  = my + 'px';
+       cr.style.left = rx + 'px';
+       cr.style.top  = ry + 'px';
+       requestAnimationFrame(loop);
+     })();
+     document.querySelectorAll('a, button').forEach(el => {
+       el.addEventListener('mouseenter', () => cr.classList.add('hovering'));
+       el.addEventListener('mouseleave', () => cr.classList.remove('hovering'));
+     });
+     window.addEventListener('scroll', () => {
+       document.querySelector('nav').classList.toggle('scrolled', window.scrollY > 40);
+     });
+     const revealEls = document.querySelectorAll('.reveal');
+     const io = new IntersectionObserver(entries => {
+       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+     }, { threshold: 0.12 });
+     revealEls.forEach(el => io.observe(el));
+   </script>
+
+   Takođe ažuriraj Google Fonts link u <head>:
+   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+   -------------------------------------------------------------------------- */
