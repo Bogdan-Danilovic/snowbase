@@ -1,23 +1,36 @@
 <?php
 /**
  * partials/nav.php
- * Minimalisticka navigacija: Peak | Peak&Palm | Palm
- * Klik na Peak/Palm vodi na index.php sa odgovarajucim ?sezona= parametrom.
+ * Snowbase navigacija: anchor linkovi levo, brand u sredini, linkovi desno.
+ *
+ * Stranica može opciono podesiti $nav_links_left i $nav_links_right
+ * (nizovi {href, label}). Inace se koriste razumni default-ovi.
  */
-$current_season = $current_season ?? (function_exists('get_season') ? get_season() : 'zima');
+$nav_links_left  = $nav_links_left  ?? [
+    ['href' => 'index.php#katalog',  'label' => 'Katalog'],
+    ['href' => 'index.php#mapa',     'label' => 'Mapa'],
+];
+$nav_links_right = $nav_links_right ?? [
+    ['href' => 'index.php#partneri', 'label' => 'Partneri'],
+    ['href' => 'index.php#utisci',   'label' => 'Utisci'],
+];
 ?>
 <nav id="main-nav">
-    <a href="index.php?sezona=zima"
-       class="season-link peak<?php echo $current_season === 'zima' ? ' active' : ''; ?>">
-        Peak
-    </a>
+    <div class="nav-side nav-side-left">
+        <?php foreach ($nav_links_left as $link): ?>
+            <a href="<?php echo htmlspecialchars($link['href']); ?>"<?php echo !empty($link['active']) ? ' class="active"' : ''; ?>>
+                <?php echo htmlspecialchars($link['label']); ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
 
-    <a href="index.php?sezona=<?php echo htmlspecialchars($current_season); ?>" class="logo">
-        Peak<span>&amp;</span>Palm
-    </a>
+    <?php include __DIR__ . '/logo.php'; ?>
 
-    <a href="index.php?sezona=leto"
-       class="season-link palm<?php echo $current_season === 'leto' ? ' active' : ''; ?>">
-        Palm
-    </a>
+    <div class="nav-side nav-side-right">
+        <?php foreach ($nav_links_right as $link): ?>
+            <a href="<?php echo htmlspecialchars($link['href']); ?>"<?php echo !empty($link['active']) ? ' class="active"' : ''; ?>>
+                <?php echo htmlspecialchars($link['label']); ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
 </nav>

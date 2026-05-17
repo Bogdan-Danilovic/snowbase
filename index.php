@@ -1,116 +1,72 @@
 <?php
+/**
+ * index.php — Snowbase katalog
+ * Hero, live ticker, total-budget kalkulator, partneri, mapa Evrope,
+ * recenzije karusel, katalog ski destinacija.
+ */
 require_once 'db.php';
 
-/* ---------------------------------------------------------------
-   1. SEZONA — citamo iz URL parametra ?sezona=zima|leto.
-   Sve dalje upite i CSS temu vodi ova jedna promenljiva.
-   --------------------------------------------------------------- */
-$current_season = get_season();
-
-/* ---------------------------------------------------------------
-   2. PODACI IZ BAZE — destinacije filtrirane po sezoni.
-   LEFT JOIN sa ski_info da i dalje radi za zimske kartice
-   (kolone su NULL za destinacije bez ski_info reda — npr. letnje).
-   --------------------------------------------------------------- */
+/* ============================================================
+   1. DESTINACIJE iz baze (sa ski_info JOIN-om)
+   ============================================================ */
 try {
-    $stmt = $pdo->prepare("
+    $stmt = $pdo->query("
         SELECT d.*, s.ukupno_staza_km, s.broj_zicara
-        FROM destinacije d
+        FROM   destinacije d
         LEFT JOIN ski_info s ON d.id = s.destinacija_id
-        WHERE d.sezona = ?
         ORDER BY d.id
     ");
-    $stmt->execute([$current_season]);
     $destinacije = $stmt->fetchAll();
 } catch (PDOException $e) {
-    /* Ako kolona `sezona` jos ne postoji (stara baza), fallback bez filtera */
-    try {
-        $stmt = $pdo->query("SELECT d.*, s.ukupno_staza_km, s.broj_zicara
-                             FROM destinacije d
-                             LEFT JOIN ski_info s ON d.id = s.destinacija_id");
-        $destinacije = $stmt->fetchAll();
-    } catch (PDOException $e2) {
-        die("Greska: " . $e2->getMessage());
-    }
+    die("Greska: " . $e->getMessage());
 }
 
-/* ---------------------------------------------------------------
-   2. TICKER + RECENZIJE — direktno iz baze (admin panel ih popunjava)
-   Soft-fail: ako tabele jos ne postoje, sekcije se prikazuju prazne
-   umesto da cela stranica pukne.
-   --------------------------------------------------------------- */
+/* ============================================================
+   2. AGREGATI ZA TOTAL BUDGET KALKULATOR (po destinaciji)
+   Prosek smestaja + Odrasli ski pas + Auto prevoz.
+   Šaljemo JS-u kao JSON tako da kalkulator radi BEZ Ajax-a.
+   ============================================================ */
+$budget_data = [];
+foreach ($destinacije as $d) {
+    /* prosečna cena hotela */
+    $h = $pdo->prepare("SELECT AVG(cena_po_noci_eur) FROM smestaj WHERE destinacija_id = ?");
+    $h->execute([$d['id']]);
+    $avgHotel = (float)$h->fetchColumn();
+
+    /* odrasli ski pas — najjeftinija (1 dan), srednja (3 dana), nedeljna (6 dana) */
+    $p = $pdo->prepare("SELECT cena_1dan, cena_3dana, cena_6dana FROM ski_pas_cene WHERE destinacija_id = ? AND kategorija = 'Odrasli' LIMIT 1");
+    $p->execute([$d['id']]);
+    $pas = $p->fetch() ?: ['cena_1dan' => 0, 'cena_3dana' => 0, 'cena_6dana' => 0];
+
+    $budget_data[$d['id']] = [
+        'naziv'          => $d['naziv'],
+        'hotel_prosek'   => round($avgHotel, 1),
+        'pas_1'          => (float)$pas['cena_1dan'],
+        'pas_3'          => (float)$pas['cena_3dana'],
+        'pas_6'          => (float)$pas['cena_6dana'],
+        'distanca_km'    => (int)($d['distanca_od_bg_km'] ?? 0),
+        'putarina'       => (float)($d['prosecna_putarina_eur'] ?? 0),
+    ];
+}
+
+/* ============================================================
+   3. TICKER + HOMEPAGE RECENZIJE
+   ============================================================ */
 $ticker_items = [];
 $recenzije    = [];
-
 try {
-    $stmt = $pdo->prepare("
-        SELECT tekst
-        FROM ticker_items
-        WHERE aktivan = 1
-        ORDER BY redosled, id
-    ");
-    $stmt->execute();
-    $ticker_items = $stmt->fetchAll(PDO::FETCH_COLUMN);
-} catch (PDOException $e) {
-    /* tabela jos ne postoji — pokrenuti migracija.sql */
-}
-
+    $s = $pdo->query("SELECT tekst FROM ticker_items WHERE aktivan = 1 ORDER BY redosled, id");
+    $ticker_items = $s->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {}
 try {
-    $stmt = $pdo->prepare("
-        SELECT ime, avatar, tekst, ocena,
-               datum_prikaza AS datum,
-               lokacija       AS dest
-        FROM recenzije
-        WHERE na_homepage = 1
-        ORDER BY redosled, id
-        LIMIT 8
-    ");
-    $stmt->execute();
-    $recenzije = $stmt->fetchAll();
-} catch (PDOException $e) {
-    /* tabela jos ne postoji */
-}
+    $s = $pdo->query("SELECT ime, avatar, tekst, ocena, datum_prikaza AS datum, lokacija AS dest FROM recenzije WHERE na_homepage = 1 ORDER BY redosled, id LIMIT 8");
+    $recenzije = $s->fetchAll();
+} catch (PDOException $e) {}
 
-/* ---------------------------------------------------------------
-   3. KONFIGURACIJA STRANICE — SABLON tekstova po sezoni.
-   Ovo je sustinski "univerzalni sablon": ista HTML struktura,
-   razliciti sadrzaji u zavisnosti od $current_season.
-   --------------------------------------------------------------- */
-$content_po_sezoni = [
-    'zima' => [
-        'page_title'      => 'Katalog Ski Destinacija | Peak and Palm',
-        'hero_eyebrow'    => 'Premium Alpine Travel',
-        'hero_title_1'    => 'Gde se završava',
-        'hero_title_2'    => 'asfalt, tu počinje',
-        'hero_title_em'   => 'avantura',
-        'hero_subtitle'   => 'Direktno iz Beograda do najlepših ski centara Alpa. Organizacija, logistika i komfor — sve na jednom mestu.',
-        'cta_primary'     => 'Istraži katalog',
-        'cta_secondary'   => 'Planiranje rute →',
-        'catalog_eyebrow' => 'Explore the Slopes',
-        'catalog_title_1' => 'Katalog',
-        'catalog_title_2' => 'Ski Destinacija',
-        'catalog_intro'   => 'Izaberite destinaciju, pregledajte interaktivnu mapu staza i izračunajte troškove logistike iz Beograda.',
-        'show_ski_sekcije'=> true,   /* ticker o snegu, partneri ski-brendovi, evropska mapa */
-    ],
-    'leto' => [
-        'page_title'      => 'Katalog Letnjih Destinacija | Peak and Palm',
-        'hero_eyebrow'    => 'Premium Mediterranean Travel',
-        'hero_title_1'    => 'Gde se susreće',
-        'hero_title_2'    => 'nebo i more, tu počinje',
-        'hero_title_em'   => 'odmor',
-        'hero_subtitle'   => 'Direktno iz Beograda do najlepših plaža i ostrva Mediterana. Sunce, more i komfor — sve na jednom mestu.',
-        'cta_primary'     => 'Istraži destinacije',
-        'cta_secondary'   => 'Planiranje puta →',
-        'catalog_eyebrow' => 'Discover the Coast',
-        'catalog_title_1' => 'Katalog',
-        'catalog_title_2' => 'Letnjih Destinacija',
-        'catalog_intro'   => 'Izaberite destinaciju, otkrijte staze, plaže i atrakcije, planirajte savršen letnji predah.',
-        'show_ski_sekcije'=> false,  /* nema snega/skija/evropske ski mape u leto */
-    ],
-];
-$c = $content_po_sezoni[$current_season];
-$page_title = $c['page_title'];
-
+/* ============================================================
+   4. KONFIGURACIJA STRANICE
+   ============================================================ */
+$page_title = 'Snowbase — Premium Alpine Travel';
 include 'partials/head.php';
 ?>
 <body>
@@ -125,37 +81,29 @@ include 'partials/head.php';
 <section class="video-hero" id="hero">
 
     <div class="vhero-video-wrap">
-        <!--
-            ZAMENA VIDEA:
-            A) YouTube iframe:
-               <iframe src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playlist=VIDEO_ID&rel=0" allow="autoplay" frameborder="0"></iframe>
-            B) Lokalni fajl:
-               <video autoplay muted loop playsinline><source src="videos/hero-ski.mp4" type="video/mp4"></video>
-            Trenutno: CSS fallback animacija ispod.
-        -->
         <div class="vhero-fallback"></div>
     </div>
-
     <div class="vhero-overlay"></div>
 
     <div class="vhero-content">
-        <div class="vhero-eyebrow"><?php echo htmlspecialchars($c['hero_eyebrow']); ?></div>
+        <div class="vhero-eyebrow">Vrh Sezone</div>
         <h1 class="vhero-title">
-            <?php echo htmlspecialchars($c['hero_title_1']); ?><br>
-            <?php echo htmlspecialchars($c['hero_title_2']); ?> <em><?php echo htmlspecialchars($c['hero_title_em']); ?></em>
+            Od Beograda do<br>
+            <em>najvećih</em> Alpa
         </h1>
         <p class="vhero-subtitle">
-            <?php echo htmlspecialchars($c['hero_subtitle']); ?>
+            Snowbase je premium ski katalog za one koji traže više od skijališta —
+            logistika, smeštaj, oprema i atmosfera na jednom mestu.
         </p>
         <div class="vhero-cta-group">
             <a href="#katalog" class="vhero-cta-primary">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <circle cx="7" cy="7" r="6"/><polyline points="7,4 7,7 9,9"/>
                 </svg>
-                <?php echo htmlspecialchars($c['cta_primary']); ?>
+                Istraži katalog
             </a>
-            <a href="#katalog" class="vhero-cta-secondary">
-                <?php echo htmlspecialchars($c['cta_secondary']); ?>
+            <a href="#budget" class="vhero-cta-secondary">
+                Brzi kalkulator →
             </a>
         </div>
     </div>
@@ -164,13 +112,12 @@ include 'partials/head.php';
         <span>Skroluj</span>
         <div class="scroll-line"></div>
     </div>
-
 </section>
 
 <!-- ============================================================
-     2. LIVE TICKER  (samo ZIMA — info o snegu na planinama)
+     2. LIVE TICKER
      ============================================================ -->
-<?php if ($c['show_ski_sekcije']): ?>
+<?php if (!empty($ticker_items)): ?>
 <div class="ticker-section">
     <div class="ticker-inner">
         <div class="ticker-label">
@@ -179,56 +126,49 @@ include 'partials/head.php';
         </div>
         <div class="ticker-track">
             <div class="ticker-tape" id="tickerTape">
-                <?php
-                /* Dupliramo niz da ticker animacija (translateX -50%) izgleda kao beskonacna petlja */
-                $all_items = array_merge($ticker_items, $ticker_items);
-                foreach ($all_items as $item): ?>
+                <?php $all = array_merge($ticker_items, $ticker_items); foreach ($all as $item): ?>
                     <span class="ticker-item"><?php echo htmlspecialchars($item); ?></span>
                 <?php endforeach; ?>
             </div>
         </div>
     </div>
 </div>
-<?php endif; /* ticker zima only */ ?>
+<?php endif; ?>
 
 <!-- ============================================================
-     3. QUICK ROUTE FINDER  (samo ZIMA — kalkulator distance + putarine)
+     3. TOTAL BUDGET KALKULATOR
      ============================================================ -->
-<?php if ($c['show_ski_sekcije']): ?>
-<section class="route-finder-section" id="route-finder">
+<section class="route-finder-section" id="budget">
     <div class="route-finder-wrap reveal">
         <div class="rf-header">
-            <span class="rf-eyebrow">Planiranje puta</span>
-            <h2 class="rf-title">Brzi kalkulator rute i troškova</h2>
+            <span class="rf-eyebrow">Brzi proračun</span>
+            <h2 class="rf-title">Kalkulator ukupnog budžeta</h2>
+            <p class="rf-subtitle">Izaberite destinaciju, broj osoba i trajanje — vidite okvirnu cenu smeštaja, ski pasa i prevoza za celu grupu.</p>
         </div>
+
         <div class="rf-grid">
             <div class="rf-field">
-                <label class="rf-label" for="rf-dest">Destinacija</label>
+                <label class="rf-label" for="bg-dest">Destinacija</label>
                 <div class="rf-select-wrap">
-                    <select class="rf-select" id="rf-dest">
+                    <select class="rf-select" id="bg-dest">
                         <option value="">— Izaberite skijalište —</option>
                         <?php foreach ($destinacije as $d): ?>
-                            <option value="<?php echo (int)$d['id']; ?>">
-                                <?php echo htmlspecialchars($d['naziv']); ?>
-                            </option>
+                            <option value="<?php echo (int)$d['id']; ?>"><?php echo htmlspecialchars($d['naziv']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
             </div>
             <div class="rf-field">
-                <label class="rf-label" for="rf-osobe">Broj osoba</label>
-                <input type="number" class="rf-input" id="rf-osobe"
-                       min="1" max="9" value="2" placeholder="npr. 4">
+                <label class="rf-label" for="bg-osobe">Broj osoba</label>
+                <input type="number" class="rf-input" id="bg-osobe" min="1" max="9" value="2">
             </div>
             <div class="rf-field">
-                <label class="rf-label" for="rf-dani">Trajanje (dana)</label>
-                <input type="number" class="rf-input" id="rf-dani"
-                       min="1" max="21" value="7" placeholder="npr. 7">
+                <label class="rf-label" for="bg-dani">Trajanje (dana)</label>
+                <input type="number" class="rf-input" id="bg-dani" min="1" max="21" value="6">
             </div>
             <div>
-                <button type="button" class="rf-btn" id="rf-submit">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="rf-btn" id="bg-submit">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="7" y1="1" x2="7" y2="13"/>
                         <polyline points="3,9 7,13 11,9"/>
                     </svg>
@@ -236,53 +176,69 @@ include 'partials/head.php';
                 </button>
             </div>
         </div>
+
+        <!-- Inline rezultat (po dobijanju kalkulacije) -->
+        <div class="bg-result" id="bg-result" aria-hidden="true">
+            <div class="bg-result-grid">
+                <div class="bg-result-item">
+                    <span class="bg-result-label">Smeštaj</span>
+                    <strong class="bg-result-value" id="bg-r-hotel">€0</strong>
+                    <small class="bg-result-hint" id="bg-r-hotel-h"></small>
+                </div>
+                <div class="bg-result-item">
+                    <span class="bg-result-label">Ski pas</span>
+                    <strong class="bg-result-value" id="bg-r-pas">€0</strong>
+                    <small class="bg-result-hint" id="bg-r-pas-h"></small>
+                </div>
+                <div class="bg-result-item">
+                    <span class="bg-result-label">Prevoz</span>
+                    <strong class="bg-result-value" id="bg-r-prevoz">€0</strong>
+                    <small class="bg-result-hint" id="bg-r-prevoz-h"></small>
+                </div>
+                <div class="bg-result-item bg-result-total">
+                    <span class="bg-result-label">Ukupno</span>
+                    <strong class="bg-result-value" id="bg-r-total">€0</strong>
+                    <small class="bg-result-hint" id="bg-r-total-h"></small>
+                </div>
+            </div>
+            <a href="#" id="bg-detalji" class="bg-result-cta">Pogledaj detaljnu destinaciju →</a>
+        </div>
     </div>
 </section>
-<?php endif; /* route finder zima only */ ?>
 
 <!-- ============================================================
-     4. PARTNERS  (samo ZIMA — ski brendovi)
+     4. PARTNERS
      ============================================================ -->
-<?php if ($c['show_ski_sekcije']): ?>
 <section class="partners-section" id="partneri">
     <div class="partners-label">Premium Partneri &amp; Preporučena Oprema</div>
     <div class="partners-track">
-        <a class="partner-item" data-category="Skije"
-           href="https://www.elanskis.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Skije" href="https://www.elanskis.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">ELAN<span class="logo-tag">®</span></span>
         </a>
-        <a class="partner-item" data-category="Skije"
-           href="https://www.fischersports.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Skije" href="https://www.fischersports.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">Fischer<span class="logo-tag">®</span></span>
         </a>
-        <a class="partner-item" data-category="Skije &amp; Oprema"
-           href="https://www.atomic.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Skije &amp; Oprema" href="https://www.atomic.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">Atomic<span class="logo-tag">®</span></span>
         </a>
-        <a class="partner-item" data-category="Garderoba"
-           href="https://www.salomon.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Garderoba" href="https://www.salomon.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">Salomon<span class="logo-tag">®</span></span>
         </a>
-        <a class="partner-item" data-category="Garderoba"
-           href="https://www.bogner.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Garderoba" href="https://www.bogner.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">Bogner<span class="logo-tag">®</span></span>
         </a>
-        <a class="partner-item" data-category="Skije"
-           href="https://www.voelkl.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Skije" href="https://www.voelkl.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">Völkl<span class="logo-tag">®</span></span>
         </a>
-        <a class="partner-item" data-category="Prevoz"
-           href="https://www.flixbus.com/" target="_blank" rel="noopener noreferrer">
+        <a class="partner-item" data-category="Prevoz" href="https://www.flixbus.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">FlixBus<span class="logo-tag">®</span></span>
         </a>
     </div>
 </section>
-<?php endif; /* partners zima only */ ?>
 
 <!-- ============================================================
-     5. INTERAKTIVNA MAPA EVROPE  (samo ZIMA)
+     5. MAPA EVROPE
      ============================================================ -->
-<?php if ($c['show_ski_sekcije']): ?>
 <section class="europe-section" id="mapa">
     <div class="europe-header reveal">
         <span class="section-eyebrow">Logistika iz Beograda</span>
@@ -290,137 +246,94 @@ include 'partials/head.php';
     </div>
 
     <div class="europe-map-container reveal" id="europeMapContainer">
-
         <div class="map-tooltip" id="mapTooltip"></div>
-
         <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg"
-             style="background: rgba(7,12,24,0.6); border-radius: 20px; border: 1px solid rgba(0,229,255,0.08);">
-
+             style="background: rgba(7,12,24,0.6); border-radius: 20px; border: 1px solid rgba(var(--ice-rgb),0.08);">
             <defs>
                 <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
                     <feGaussianBlur stdDeviation="3" result="blur"/>
-                    <feMerge>
-                        <feMergeNode in="blur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                 </filter>
                 <filter id="dotGlow" x="-100%" y="-100%" width="300%" height="300%">
                     <feGaussianBlur stdDeviation="4" result="blur"/>
-                    <feMerge>
-                        <feMergeNode in="blur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                 </filter>
                 <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
                     <stop offset="0%"   stop-color="#0a1428" stop-opacity="1"/>
                     <stop offset="100%" stop-color="#04060d" stop-opacity="1"/>
                 </radialGradient>
-                <!-- Suptilna mreza tackica koja zamenjuje rogobatne polygone zemalja -->
                 <pattern id="dotGrid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
                     <circle cx="1" cy="1" r="0.7" fill="rgba(255,255,255,0.06)"/>
                 </pattern>
             </defs>
-
             <rect width="800" height="500" fill="url(#bgGrad)" rx="20"/>
             <rect width="800" height="500" fill="url(#dotGrid)" rx="20"/>
 
-            <!-- Animovane linije Beograd → destinacije -->
-            <path d="M 480 300 Q 380 200 230 245"
-                  stroke="rgba(0,229,255,0.45)" stroke-width="1.5" fill="none"
-                  stroke-dasharray="6 4" filter="url(#lineGlow)"
-                  style="animation: dash-flow 4s linear infinite;"></path>
-            <path d="M 480 300 Q 420 260 310 275"
-                  stroke="rgba(0,229,255,0.40)" stroke-width="1.5" fill="none"
-                  stroke-dasharray="6 4" filter="url(#lineGlow)"
-                  style="animation: dash-flow 3.5s linear infinite 0.6s;"></path>
-            <path d="M 480 300 Q 445 255 370 228"
-                  stroke="rgba(0,229,255,0.45)" stroke-width="1.5" fill="none"
-                  stroke-dasharray="6 4" filter="url(#lineGlow)"
-                  style="animation: dash-flow 3s linear infinite 1.2s;"></path>
-            <path d="M 480 300 Q 400 230 285 240"
-                  stroke="rgba(0,229,255,0.35)" stroke-width="1.5" fill="none"
-                  stroke-dasharray="6 4" filter="url(#lineGlow)"
-                  style="animation: dash-flow 4.5s linear infinite 0.3s;"></path>
+            <!-- Animovane linije -->
+            <path d="M 480 300 Q 380 200 230 245" stroke="rgba(var(--ice-rgb),0.45)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 4s linear infinite;"></path>
+            <path d="M 480 300 Q 420 260 310 275" stroke="rgba(var(--ice-rgb),0.40)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 3.5s linear infinite 0.6s;"></path>
+            <path d="M 480 300 Q 445 255 370 228" stroke="rgba(var(--ice-rgb),0.45)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 3s linear infinite 1.2s;"></path>
+            <path d="M 480 300 Q 400 230 285 240" stroke="rgba(var(--ice-rgb),0.35)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 4.5s linear infinite 0.3s;"></path>
 
-            <!-- Destination pins -->
-            <g class="map-pin" data-dest="Chamonix / Les Orres" data-country="Francuska"
-               data-km="1580" data-ski="280 km staza" transform="translate(228, 243)">
-                <circle r="14" fill="rgba(0,229,255,0.08)" style="animation: map-ping 2.4s ease-out infinite;"/>
-                <circle r="6"  fill="rgba(0,229,255,0.18)" stroke="rgba(0,229,255,0.5)" stroke-width="1"/>
-                <circle r="3"  fill="#00e5ff" filter="url(#dotGlow)"/>
+            <!-- Pinovi destinacija -->
+            <g class="map-pin" data-dest="Chamonix / Les Orres" data-country="Francuska" data-km="1580" data-ski="280 km staza" transform="translate(228, 243)">
+                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite;"/>
+                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
+                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
             </g>
-            <g class="map-pin" data-dest="Cortina d'Ampezzo" data-country="Italija"
-               data-km="1190" data-ski="140 km staza" transform="translate(310, 273)">
-                <circle r="14" fill="rgba(0,229,255,0.08)" style="animation: map-ping 2.4s ease-out infinite 0.5s;"/>
-                <circle r="6"  fill="rgba(0,229,255,0.18)" stroke="rgba(0,229,255,0.5)" stroke-width="1"/>
-                <circle r="3"  fill="#00e5ff" filter="url(#dotGlow)"/>
+            <g class="map-pin" data-dest="Cortina d'Ampezzo" data-country="Italija" data-km="1190" data-ski="140 km staza" transform="translate(310, 273)">
+                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite 0.5s;"/>
+                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
+                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
             </g>
-            <g class="map-pin" data-dest="Innsbruck / Arlberg" data-country="Austrija"
-               data-km="1025" data-ski="340 km staza" transform="translate(368, 226)">
-                <circle r="14" fill="rgba(0,229,255,0.08)" style="animation: map-ping 2.4s ease-out infinite 1.0s;"/>
-                <circle r="6"  fill="rgba(0,229,255,0.18)" stroke="rgba(0,229,255,0.5)" stroke-width="1"/>
-                <circle r="3"  fill="#00e5ff" filter="url(#dotGlow)"/>
+            <g class="map-pin" data-dest="St. Anton / Arlberg" data-country="Austrija" data-km="1025" data-ski="305 km staza" transform="translate(368, 226)">
+                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite 1.0s;"/>
+                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
+                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
             </g>
-            <g class="map-pin" data-dest="Zermatt / Davos" data-country="Švajcarska"
-               data-km="1350" data-ski="360 km staza" transform="translate(284, 238)">
-                <circle r="14" fill="rgba(0,229,255,0.08)" style="animation: map-ping 2.4s ease-out infinite 1.5s;"/>
-                <circle r="6"  fill="rgba(0,229,255,0.18)" stroke="rgba(0,229,255,0.5)" stroke-width="1"/>
-                <circle r="3"  fill="#00e5ff" filter="url(#dotGlow)"/>
+            <g class="map-pin" data-dest="Zermatt" data-country="Švajcarska" data-km="1350" data-ski="360 km staza" transform="translate(284, 238)">
+                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite 1.5s;"/>
+                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
+                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
             </g>
 
             <!-- Beograd polazna tacka -->
             <g transform="translate(479, 300)">
-                <circle r="18" fill="rgba(0,229,255,0.05)" style="animation: map-ping 2s ease-out infinite;"/>
-                <circle r="10" fill="rgba(0,229,255,0.14)" stroke="rgba(0,229,255,0.6)" stroke-width="1.5"/>
-                <circle r="5"  fill="#00e5ff" filter="url(#dotGlow)"/>
-                <text y="-18" text-anchor="middle" font-family="'Outfit',sans-serif"
-                      font-size="9.5" font-weight="600" letter-spacing="1"
-                      fill="rgba(0,229,255,0.9)">BEOGRAD</text>
+                <circle r="18" fill="rgba(var(--ice-rgb),0.05)" style="animation: map-ping 2s ease-out infinite;"/>
+                <circle r="10" fill="rgba(var(--ice-rgb),0.14)" stroke="rgba(var(--ice-rgb),0.6)" stroke-width="1.5"/>
+                <circle r="5"  fill="var(--ice)" filter="url(#dotGlow)"/>
+                <text y="-18" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" font-weight="600" letter-spacing="1" fill="rgba(var(--ice-rgb),0.9)">BEOGRAD</text>
             </g>
 
-            <text x="225" y="235" text-anchor="middle" font-family="'Outfit',sans-serif"
-                  font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">FR</text>
-            <text x="310" y="315" text-anchor="middle" font-family="'Outfit',sans-serif"
-                  font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">IT</text>
-            <text x="368" y="238" text-anchor="middle" font-family="'Outfit',sans-serif"
-                  font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">AT</text>
-            <text x="480" y="318" text-anchor="middle" font-family="'Outfit',sans-serif"
-                  font-size="8" fill="rgba(0,229,255,0.35)" letter-spacing="1">RS</text>
-
+            <text x="225" y="235" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">FR</text>
+            <text x="310" y="315" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">IT</text>
+            <text x="368" y="238" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">AT</text>
+            <text x="480" y="318" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(var(--ice-rgb),0.35)" letter-spacing="1">RS</text>
         </svg>
     </div>
 </section>
-<?php endif; /* europe map zima only */ ?>
 
 <!-- ============================================================
-     6. TESTIMONIALS CAROUSEL  (uvek se prikazuje — generic)
+     6. RECENZIJE
      ============================================================ -->
+<?php if (!empty($recenzije)): ?>
 <section class="testimonials-section" id="utisci">
     <div class="testimonials-header reveal">
         <span class="section-eyebrow">Putnici o nama</span>
         <h2 class="section-heading">Pravi <span>Utisci</span></h2>
     </div>
-
     <div class="reviews-carousel reveal" id="reviewsCarousel">
-
         <button class="carousel-arrow prev" type="button" data-dir="-1" aria-label="Prethodni">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="10,3 5,8 10,13"/>
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
         </button>
-
         <div class="reviews-track" id="reviewsTrack">
             <?php foreach ($recenzije as $i => $rev): ?>
             <div class="review-slide">
                 <div class="review-card-main<?php echo $i === 0 ? ' active-slide' : ''; ?>">
                     <div class="review-stars">
-                        <?php for ($s = 0; $s < (int)$rev['ocena']; $s++): ?>
-                            <span class="star">★</span>
-                        <?php endfor; ?>
+                        <?php for ($s = 0; $s < (int)$rev['ocena']; $s++): ?><span class="star">★</span><?php endfor; ?>
                     </div>
-                    <p class="review-text-main">
-                        "<?php echo htmlspecialchars($rev['tekst']); ?>"
-                    </p>
+                    <p class="review-text-main">"<?php echo htmlspecialchars($rev['tekst']); ?>"</p>
                     <div class="review-author">
                         <div class="review-avatar-main"><?php echo htmlspecialchars($rev['avatar']); ?></div>
                         <div>
@@ -433,36 +346,27 @@ include 'partials/head.php';
             </div>
             <?php endforeach; ?>
         </div>
-
         <button class="carousel-arrow next" type="button" data-dir="1" aria-label="Sledeći">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6,3 11,8 6,13"/>
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,3 11,8 6,13"/></svg>
         </button>
-
         <div class="carousel-nav" id="carouselNav">
             <?php foreach ($recenzije as $i => $rev): ?>
-                <button class="carousel-dot<?php echo $i === 0 ? ' active' : ''; ?>"
-                        type="button" data-index="<?php echo (int)$i; ?>"
-                        aria-label="Recenzija <?php echo (int)$i + 1; ?>"></button>
+                <button class="carousel-dot<?php echo $i === 0 ? ' active' : ''; ?>" type="button" data-index="<?php echo (int)$i; ?>" aria-label="Recenzija <?php echo (int)$i + 1; ?>"></button>
             <?php endforeach; ?>
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- ============================================================
-     KATALOG GRID
+     KATALOG DESTINACIJA
      ============================================================ -->
 <section class="catalog-section" id="katalog">
-
     <div class="catalog-header-new reveal">
-        <span class="section-eyebrow"><?php echo htmlspecialchars($c['catalog_eyebrow']); ?></span>
-        <h2 class="section-heading">
-            <?php echo htmlspecialchars($c['catalog_title_1']); ?>
-            <span><?php echo htmlspecialchars($c['catalog_title_2']); ?></span>
-        </h2>
+        <span class="section-eyebrow">Snowbase Katalog</span>
+        <h2 class="section-heading">Ski <span>Destinacije</span></h2>
         <p class="catalog-intro">
-            <?php echo htmlspecialchars($c['catalog_intro']); ?>
+            Od Kopaonika do Zermatt-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
         </p>
         <div class="section-divider"></div>
     </div>
@@ -471,74 +375,52 @@ include 'partials/head.php';
         <?php foreach ($destinacije as $d): ?>
         <div class="dest-card reveal">
             <div class="dest-img-container">
-                <img src="https://images.unsplash.com/photo-1549294413-26f195200c16?q=80&w=800&auto=format&fit=crop"
-                     class="dest-img"
-                     alt="<?php echo htmlspecialchars($d['naziv']); ?>"
-                     width="800" height="500"
-                     loading="lazy" decoding="async">
+                <img src="https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=800&auto=format&fit=crop"
+                     class="dest-img" alt="<?php echo htmlspecialchars($d['naziv']); ?>"
+                     width="800" height="500" loading="lazy" decoding="async">
             </div>
             <div class="dest-body">
                 <h2 class="dest-title"><?php echo htmlspecialchars($d['naziv']); ?></h2>
                 <p class="dest-desc">
                     <?php
-                        $opis = htmlspecialchars($d['opis']);
-                        echo (strlen($opis) > 120) ? substr($opis, 0, 115) . '...' : $opis;
+                        $opis = htmlspecialchars($d['opis'] ?? '');
+                        echo (strlen($opis) > 120) ? mb_substr($opis, 0, 115) . '...' : $opis;
                     ?>
                 </p>
                 <div class="dest-meta">
-                    <?php if ($current_season === 'zima'): ?>
-                        <div class="meta-item">
-                            <span>Ukupno staza</span>
-                            <strong><?php echo (int)($d['ukupno_staza_km'] ?? 0); ?> km</strong>
-                        </div>
-                        <div class="meta-item">
-                            <span>Broj žičara</span>
-                            <strong><?php echo (int)($d['broj_zicara'] ?? 0); ?></strong>
-                        </div>
-                        <div class="meta-item">
-                            <span>Udaljenost</span>
-                            <strong><?php echo (int)($d['distanca_od_bg_km'] ?? 0); ?> km</strong>
-                        </div>
-                    <?php else: /* LETO — drugaciji set podataka */ ?>
-                        <div class="meta-item">
-                            <span>Zemlja</span>
-                            <strong><?php echo htmlspecialchars($d['zemlja'] ?? '—'); ?></strong>
-                        </div>
-                        <div class="meta-item">
-                            <span>Region</span>
-                            <strong><?php echo htmlspecialchars($d['region'] ?? '—'); ?></strong>
-                        </div>
-                        <div class="meta-item">
-                            <span>Sezona</span>
-                            <strong>Maj — Oktobar</strong>
-                        </div>
-                    <?php endif; ?>
+                    <div class="meta-item">
+                        <span>Ukupno staza</span>
+                        <strong><?php echo (int)($d['ukupno_staza_km'] ?? 0); ?> km</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Žičara</span>
+                        <strong><?php echo (int)($d['broj_zicara'] ?? 0); ?></strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Udaljenost</span>
+                        <strong><?php echo (int)($d['distanca_od_bg_km'] ?? 0); ?> km</strong>
+                    </div>
                 </div>
-                <a href="destinacija.php?id=<?php echo (int)$d['id']; ?>&amp;sezona=<?php echo htmlspecialchars($current_season); ?>" class="btn-view">
-                    Pogledaj Detaljnije
+                <a href="destinacija.php?id=<?php echo (int)$d['id']; ?>" class="btn-view">
+                    Pogledaj detaljnije
                 </a>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
-
 </section>
 
 <!-- ============================================================
      JAVASCRIPT
      ============================================================ -->
 <script>
-/* ================================================================
-   NAV — scroll efekat
-   ================================================================ */
+/* Nav scroll efekat */
 const mainNav = document.getElementById('main-nav');
 window.addEventListener('scroll', () => {
-    mainNav.classList.toggle('scrolled', window.scrollY > 60);
+    mainNav?.classList.toggle('scrolled', window.scrollY > 60);
 }, { passive: true });
 
-/* ================================================================
-   REVEAL ANIMACIJA (IntersectionObserver)
-   ================================================================ */
+/* Reveal animacije */
 const revealObs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -547,9 +429,7 @@ const revealObs = new IntersectionObserver((entries) => {
         }
     });
 }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
-
 document.querySelectorAll('.reveal').forEach((el) => {
-    /* Stepenasti delay za kartice u katalogu */
     const grid = el.closest('.dest-grid');
     if (grid) {
         const idx = Array.from(grid.children).indexOf(el);
@@ -559,64 +439,93 @@ document.querySelectorAll('.reveal').forEach((el) => {
 });
 
 /* ================================================================
-   ROUTE FINDER — postoji samo u ZIMA modu (guard ako elementi fale)
+   TOTAL BUDGET KALKULATOR — sve se računa lokalno iz preloaded JSON-a
    ================================================================ */
-const rfDest   = document.getElementById('rf-dest');
-const rfOsobe  = document.getElementById('rf-osobe');
-const rfDani   = document.getElementById('rf-dani');
-const rfSubmit = document.getElementById('rf-submit');
+const BUDGET_DATA = <?php echo json_encode($budget_data, JSON_UNESCAPED_UNICODE); ?>;
+const bgDest    = document.getElementById('bg-dest');
+const bgOsobe   = document.getElementById('bg-osobe');
+const bgDani    = document.getElementById('bg-dani');
+const bgSubmit  = document.getElementById('bg-submit');
+const bgResult  = document.getElementById('bg-result');
+const bgDetalji = document.getElementById('bg-detalji');
 
-if (rfDest && rfSubmit) {
-    function routeFinderGo() {
-        if (!rfDest.value) {
-            rfDest.classList.add('is-error');
-            setTimeout(() => rfDest.classList.remove('is-error'), 1800);
-            return;
-        }
-        const params = new URLSearchParams({
-            id:    rfDest.value,
-            osobe: rfOsobe.value || 2,
-            dani:  rfDani.value  || 7,
-        });
-        window.location.href = `destinacija.php?${params.toString()}#logistika`;
+function calcBudget() {
+    const destId = parseInt(bgDest.value, 10);
+    const osobe  = Math.max(1, parseInt(bgOsobe.value, 10) || 1);
+    const dani   = Math.max(1, parseInt(bgDani.value, 10) || 1);
+
+    if (!destId || !BUDGET_DATA[destId]) {
+        bgDest.classList.add('is-error');
+        setTimeout(() => bgDest.classList.remove('is-error'), 1800);
+        return;
     }
-    rfSubmit.addEventListener('click', routeFinderGo);
-    [rfDest, rfOsobe, rfDani].forEach(el => {
-        el.addEventListener('keydown', e => { if (e.key === 'Enter') routeFinderGo(); });
-    });
+
+    const d = BUDGET_DATA[destId];
+
+    /* Smestaj: prosek × dani × osobe */
+    const hotelTotal = d.hotel_prosek * dani * osobe;
+
+    /* Ski pas Odrasli: izbor najbliže cene po danu */
+    let pasPerOsoba = 0;
+    if (dani <= 1)      pasPerOsoba = d.pas_1;
+    else if (dani <= 3) pasPerOsoba = d.pas_3;
+    else if (dani <= 6) pasPerOsoba = d.pas_6;
+    else                pasPerOsoba = d.pas_6 + (d.pas_1 * (dani - 6)); /* aproksimacija */
+    const pasTotal = pasPerOsoba * osobe;
+
+    /* Prevoz auto: distanca × 2 × 0.06 EUR/km + putarina × 2 (po grupi, ne po osobi) */
+    const gorivo  = d.distanca_km * 2 * 0.06;
+    const putar   = d.putarina    * 2;
+    const prevozTotal = gorivo + putar;
+
+    const total = hotelTotal + pasTotal + prevozTotal;
+
+    /* Prikazi rezultate sa animacijom */
+    setVal('bg-r-hotel',  '€' + Math.round(hotelTotal));
+    setVal('bg-r-pas',    '€' + Math.round(pasTotal));
+    setVal('bg-r-prevoz', '€' + Math.round(prevozTotal));
+    setVal('bg-r-total',  '€' + Math.round(total));
+
+    document.getElementById('bg-r-hotel-h').textContent  = `prosek €${d.hotel_prosek.toFixed(0)}/noć × ${dani} × ${osobe}`;
+    document.getElementById('bg-r-pas-h').textContent    = `Odrasli × ${osobe} × ${dani} dana`;
+    document.getElementById('bg-r-prevoz-h').textContent = `auto · ${d.distanca_km * 2} km povratno`;
+    document.getElementById('bg-r-total-h').textContent  = `okvirno za grupu od ${osobe} ${osobe === 1 ? 'osobe' : 'osoba'}`;
+
+    bgDetalji.href = 'destinacija.php?id=' + destId;
+    bgResult.classList.add('visible');
+    bgResult.setAttribute('aria-hidden', 'false');
 }
+function setVal(id, val) {
+    const el = document.getElementById(id);
+    el.classList.add('updating');
+    setTimeout(() => { el.textContent = val; el.classList.remove('updating'); }, 200);
+}
+bgSubmit.addEventListener('click', calcBudget);
+[bgDest, bgOsobe, bgDani].forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') calcBudget(); });
+});
+/* Auto-recalculate na promenu (UX kao u Booking-u) */
+bgDest.addEventListener('change', () => { if (bgDest.value) calcBudget(); });
 
 /* ================================================================
-   EUROPE MAP — tooltip (samo ZIMA — guard ako mapa ne postoji)
+   EUROPE MAP — tooltip
    ================================================================ */
-const tooltip      = document.getElementById('mapTooltip');
+const tooltip = document.getElementById('mapTooltip');
 const mapContainer = document.getElementById('europeMapContainer');
-
 if (tooltip && mapContainer) {
     document.querySelectorAll('.map-pin').forEach(pin => {
         pin.style.cursor = 'pointer';
-
         pin.addEventListener('mouseenter', function() {
             const { dest, country, km, ski } = this.dataset;
-            tooltip.innerHTML = `
-                <div class="tt-dest">${dest}</div>
-                <div class="tt-country">${country}</div>
-                <div class="tt-km"><strong>${km} km</strong> od Beograda</div>
-                <div class="tt-ski">${ski}</div>
-            `;
-            const containerRect = mapContainer.getBoundingClientRect();
-            const pinRect       = this.getBoundingClientRect();
-            const pinCenterX    = pinRect.left + pinRect.width / 2 - containerRect.left;
-            const pinTopY       = pinRect.top  - containerRect.top;
-            tooltip.style.left = pinCenterX + 'px';
-            tooltip.style.top  = (pinTopY - tooltip.offsetHeight - 18) + 'px';
+            tooltip.innerHTML = `<div class="tt-dest">${dest}</div><div class="tt-country">${country}</div><div class="tt-km"><strong>${km} km</strong> od Beograda</div><div class="tt-ski">${ski}</div>`;
+            const cr = mapContainer.getBoundingClientRect();
+            const pr = this.getBoundingClientRect();
+            tooltip.style.left = (pr.left + pr.width/2 - cr.left) + 'px';
+            tooltip.style.top  = (pr.top  - cr.top - tooltip.offsetHeight - 18) + 'px';
             tooltip.classList.add('visible');
         });
-
         pin.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
-        pin.addEventListener('click', () => {
-            document.getElementById('katalog').scrollIntoView({ behavior: 'smooth' });
-        });
+        pin.addEventListener('click', () => document.getElementById('katalog').scrollIntoView({ behavior: 'smooth' }));
     });
 }
 
@@ -626,51 +535,24 @@ if (tooltip && mapContainer) {
 const carouselTotal = <?php echo (int)count($recenzije); ?>;
 const carouselTrack = document.getElementById('reviewsTrack');
 const carousel      = document.getElementById('reviewsCarousel');
-
 if (carouselTotal > 0 && carousel) {
-    let carouselCurrent = 0;
-    let carouselTimer;
-
-    function carouselGoTo(index) {
-        carouselCurrent = (index + carouselTotal) % carouselTotal;
-        carouselTrack.style.transform = `translateX(-${carouselCurrent * 100}%)`;
-
-        document.querySelectorAll('.review-card-main').forEach((s, i) => {
-            s.classList.toggle('active-slide', i === carouselCurrent);
-        });
-        document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === carouselCurrent);
-        });
+    let curr = 0, timer;
+    function go(i) {
+        curr = (i + carouselTotal) % carouselTotal;
+        carouselTrack.style.transform = `translateX(-${curr * 100}%)`;
+        document.querySelectorAll('.review-card-main').forEach((s, n) => s.classList.toggle('active-slide', n === curr));
+        document.querySelectorAll('.carousel-dot').forEach((d, n) => d.classList.toggle('active', n === curr));
     }
-
-    function carouselMove(dir) { carouselGoTo(carouselCurrent + dir); }
-
-    /* Strelice + tackice (event delegation umesto inline onclick) */
-    document.querySelectorAll('.carousel-arrow').forEach(btn => {
-        btn.addEventListener('click', () => carouselMove(parseInt(btn.dataset.dir, 10)));
-    });
-    document.querySelectorAll('.carousel-dot').forEach(dot => {
-        dot.addEventListener('click', () => carouselGoTo(parseInt(dot.dataset.index, 10)));
-    });
-
-    /* Auto-rotate */
-    function startCarouselTimer() {
-        carouselTimer = setInterval(() => carouselMove(1), 5000);
-    }
-    startCarouselTimer();
-
-    carousel.addEventListener('mouseenter', () => clearInterval(carouselTimer));
-    carousel.addEventListener('mouseleave', startCarouselTimer);
-
-    /* Touch / swipe */
-    let touchStartX = 0;
-    carousel.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].clientX;
-    }, { passive: true });
-    carousel.addEventListener('touchend', e => {
-        const diff = touchStartX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 40) carouselMove(diff > 0 ? 1 : -1);
-    });
+    function move(dir) { go(curr + dir); }
+    document.querySelectorAll('.carousel-arrow').forEach(btn => btn.addEventListener('click', () => move(parseInt(btn.dataset.dir, 10))));
+    document.querySelectorAll('.carousel-dot').forEach(dot => dot.addEventListener('click', () => go(parseInt(dot.dataset.index, 10))));
+    function startTimer() { timer = setInterval(() => move(1), 5000); }
+    startTimer();
+    carousel.addEventListener('mouseenter', () => clearInterval(timer));
+    carousel.addEventListener('mouseleave', startTimer);
+    let tx = 0;
+    carousel.addEventListener('touchstart', e => { tx = e.changedTouches[0].clientX; }, { passive: true });
+    carousel.addEventListener('touchend',   e => { const diff = tx - e.changedTouches[0].clientX; if (Math.abs(diff) > 40) move(diff > 0 ? 1 : -1); });
 }
 </script>
 
