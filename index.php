@@ -1,7 +1,7 @@
 <?php
 /**
  * index.php — Snowbase katalog
- * Hero, live ticker, total-budget kalkulator, partneri, mapa Evrope,
+ * Hero, live ticker, rich kalkulator, partneri, mapa Evrope,
  * recenzije karusel, katalog ski destinacija.
  */
 require_once 'db.php';
@@ -22,30 +22,19 @@ try {
 }
 
 /* ============================================================
-   2. AGREGATI ZA TOTAL BUDGET KALKULATOR (po destinaciji)
-   Prosek smestaja + Odrasli ski pas + Auto prevoz.
-   Šaljemo JS-u kao JSON tako da kalkulator radi BEZ Ajax-a.
+   2. MAPA EVROPE — Yandex Maps (Kosovo prikazano kao deo Srbije)
    ============================================================ */
-$budget_data = [];
+$map_destinations = [];
 foreach ($destinacije as $d) {
-    /* prosečna cena hotela */
-    $h = $pdo->prepare("SELECT AVG(cena_po_noci_eur) FROM smestaj WHERE destinacija_id = ?");
-    $h->execute([$d['id']]);
-    $avgHotel = (float)$h->fetchColumn();
-
-    /* odrasli ski pas — najjeftinija (1 dan), srednja (3 dana), nedeljna (6 dana) */
-    $p = $pdo->prepare("SELECT cena_1dan, cena_3dana, cena_6dana FROM ski_pas_cene WHERE destinacija_id = ? AND kategorija = 'Odrasli' LIMIT 1");
-    $p->execute([$d['id']]);
-    $pas = $p->fetch() ?: ['cena_1dan' => 0, 'cena_3dana' => 0, 'cena_6dana' => 0];
-
-    $budget_data[$d['id']] = [
-        'naziv'          => $d['naziv'],
-        'hotel_prosek'   => round($avgHotel, 1),
-        'pas_1'          => (float)$pas['cena_1dan'],
-        'pas_3'          => (float)$pas['cena_3dana'],
-        'pas_6'          => (float)$pas['cena_6dana'],
-        'distanca_km'    => (int)($d['distanca_od_bg_km'] ?? 0),
-        'putarina'       => (float)($d['prosecna_putarina_eur'] ?? 0),
+    if ($d['lat'] === null || $d['lng'] === null) continue;
+    $map_destinations[] = [
+        'id'     => (int)$d['id'],
+        'naziv'  => $d['naziv'],
+        'zemlja' => $d['zemlja'],
+        'km'     => (int)$d['distanca_od_bg_km'],
+        'staze'  => (int)$d['ukupno_staza_km'],
+        'lat'    => (float)$d['lat'],
+        'lng'    => (float)$d['lng'],
     ];
 }
 
@@ -102,7 +91,7 @@ include 'partials/head.php';
                 </svg>
                 Istraži katalog
             </a>
-            <a href="#budget" class="vhero-cta-secondary">
+            <a href="#rcalc" class="vhero-cta-secondary">
                 Brzi kalkulator →
             </a>
         </div>
@@ -136,75 +125,9 @@ include 'partials/head.php';
 <?php endif; ?>
 
 <!-- ============================================================
-     3. TOTAL BUDGET KALKULATOR
+     3. RICH KALKULATOR (partials/calculator.php)
      ============================================================ -->
-<section class="route-finder-section" id="budget">
-    <div class="route-finder-wrap reveal">
-        <div class="rf-header">
-            <span class="rf-eyebrow">Brzi proračun</span>
-            <h2 class="rf-title">Kalkulator ukupnog budžeta</h2>
-            <p class="rf-subtitle">Izaberite destinaciju, broj osoba i trajanje — vidite okvirnu cenu smeštaja, ski pasa i prevoza za celu grupu.</p>
-        </div>
-
-        <div class="rf-grid">
-            <div class="rf-field">
-                <label class="rf-label" for="bg-dest">Destinacija</label>
-                <div class="rf-select-wrap">
-                    <select class="rf-select" id="bg-dest">
-                        <option value="">— Izaberite skijalište —</option>
-                        <?php foreach ($destinacije as $d): ?>
-                            <option value="<?php echo (int)$d['id']; ?>"><?php echo htmlspecialchars($d['naziv']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
-            <div class="rf-field">
-                <label class="rf-label" for="bg-osobe">Broj osoba</label>
-                <input type="number" class="rf-input" id="bg-osobe" min="1" max="9" value="2">
-            </div>
-            <div class="rf-field">
-                <label class="rf-label" for="bg-dani">Trajanje (dana)</label>
-                <input type="number" class="rf-input" id="bg-dani" min="1" max="21" value="6">
-            </div>
-            <div>
-                <button type="button" class="rf-btn" id="bg-submit">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="7" y1="1" x2="7" y2="13"/>
-                        <polyline points="3,9 7,13 11,9"/>
-                    </svg>
-                    Izračunaj
-                </button>
-            </div>
-        </div>
-
-        <!-- Inline rezultat (po dobijanju kalkulacije) -->
-        <div class="bg-result" id="bg-result" aria-hidden="true">
-            <div class="bg-result-grid">
-                <div class="bg-result-item">
-                    <span class="bg-result-label">Smeštaj</span>
-                    <strong class="bg-result-value" id="bg-r-hotel">€0</strong>
-                    <small class="bg-result-hint" id="bg-r-hotel-h"></small>
-                </div>
-                <div class="bg-result-item">
-                    <span class="bg-result-label">Ski pas</span>
-                    <strong class="bg-result-value" id="bg-r-pas">€0</strong>
-                    <small class="bg-result-hint" id="bg-r-pas-h"></small>
-                </div>
-                <div class="bg-result-item">
-                    <span class="bg-result-label">Prevoz</span>
-                    <strong class="bg-result-value" id="bg-r-prevoz">€0</strong>
-                    <small class="bg-result-hint" id="bg-r-prevoz-h"></small>
-                </div>
-                <div class="bg-result-item bg-result-total">
-                    <span class="bg-result-label">Ukupno</span>
-                    <strong class="bg-result-value" id="bg-r-total">€0</strong>
-                    <small class="bg-result-hint" id="bg-r-total-h"></small>
-                </div>
-            </div>
-            <a href="#" id="bg-detalji" class="bg-result-cta">Pogledaj detaljnu destinaciju →</a>
-        </div>
-    </div>
-</section>
+<?php include 'partials/calculator.php'; ?>
 
 <!-- ============================================================
      4. PARTNERS
@@ -237,81 +160,30 @@ include 'partials/head.php';
 </section>
 
 <!-- ============================================================
-     5. MAPA EVROPE
+     5. MAPA EVROPE — Yandex (Kosovo prikazano kao deo Srbije)
      ============================================================ -->
-<section class="europe-section" id="mapa">
-    <div class="europe-header reveal">
+<section class="ymap-section" id="mapa">
+    <div class="ymap-header reveal">
         <span class="section-eyebrow">Logistika iz Beograda</span>
         <h2 class="section-heading">Naše <span>Destinacije</span> na mapi</h2>
+        <p class="ymap-subtitle">Realna geografska mapa sa svih 8 ski destinacija</p>
     </div>
 
-    <div class="europe-map-container reveal" id="europeMapContainer">
-        <div class="map-tooltip" id="mapTooltip"></div>
-        <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg"
-             style="background: rgba(7,12,24,0.6); border-radius: 20px; border: 1px solid rgba(var(--ice-rgb),0.08);">
-            <defs>
-                <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <filter id="dotGlow" x="-100%" y="-100%" width="300%" height="300%">
-                    <feGaussianBlur stdDeviation="4" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%"   stop-color="#0a1428" stop-opacity="1"/>
-                    <stop offset="100%" stop-color="#04060d" stop-opacity="1"/>
-                </radialGradient>
-                <pattern id="dotGrid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-                    <circle cx="1" cy="1" r="0.7" fill="rgba(255,255,255,0.06)"/>
-                </pattern>
-            </defs>
-            <rect width="800" height="500" fill="url(#bgGrad)" rx="20"/>
-            <rect width="800" height="500" fill="url(#dotGrid)" rx="20"/>
-
-            <!-- Animovane linije -->
-            <path d="M 480 300 Q 380 200 230 245" stroke="rgba(var(--ice-rgb),0.45)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 4s linear infinite;"></path>
-            <path d="M 480 300 Q 420 260 310 275" stroke="rgba(var(--ice-rgb),0.40)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 3.5s linear infinite 0.6s;"></path>
-            <path d="M 480 300 Q 445 255 370 228" stroke="rgba(var(--ice-rgb),0.45)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 3s linear infinite 1.2s;"></path>
-            <path d="M 480 300 Q 400 230 285 240" stroke="rgba(var(--ice-rgb),0.35)" stroke-width="1.5" fill="none" stroke-dasharray="6 4" filter="url(#lineGlow)" style="animation: dash-flow 4.5s linear infinite 0.3s;"></path>
-
-            <!-- Pinovi destinacija -->
-            <g class="map-pin" data-dest="Chamonix / Les Orres" data-country="Francuska" data-km="1580" data-ski="280 km staza" transform="translate(228, 243)">
-                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite;"/>
-                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
-                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
-            </g>
-            <g class="map-pin" data-dest="Cortina d'Ampezzo" data-country="Italija" data-km="1190" data-ski="140 km staza" transform="translate(310, 273)">
-                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite 0.5s;"/>
-                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
-                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
-            </g>
-            <g class="map-pin" data-dest="St. Anton / Arlberg" data-country="Austrija" data-km="1025" data-ski="305 km staza" transform="translate(368, 226)">
-                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite 1.0s;"/>
-                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
-                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
-            </g>
-            <g class="map-pin" data-dest="Zermatt" data-country="Švajcarska" data-km="1350" data-ski="360 km staza" transform="translate(284, 238)">
-                <circle r="14" fill="rgba(var(--ice-rgb),0.08)" style="animation: map-ping 2.4s ease-out infinite 1.5s;"/>
-                <circle r="6"  fill="rgba(var(--ice-rgb),0.18)" stroke="rgba(var(--ice-rgb),0.5)" stroke-width="1"/>
-                <circle r="3"  fill="var(--ice)" filter="url(#dotGlow)"/>
-            </g>
-
-            <!-- Beograd polazna tacka -->
-            <g transform="translate(479, 300)">
-                <circle r="18" fill="rgba(var(--ice-rgb),0.05)" style="animation: map-ping 2s ease-out infinite;"/>
-                <circle r="10" fill="rgba(var(--ice-rgb),0.14)" stroke="rgba(var(--ice-rgb),0.6)" stroke-width="1.5"/>
-                <circle r="5"  fill="var(--ice)" filter="url(#dotGlow)"/>
-                <text y="-18" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="9.5" font-weight="600" letter-spacing="1" fill="rgba(var(--ice-rgb),0.9)">BEOGRAD</text>
-            </g>
-
-            <text x="225" y="235" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">FR</text>
-            <text x="310" y="315" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">IT</text>
-            <text x="368" y="238" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.18)" letter-spacing="1">AT</text>
-            <text x="480" y="318" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(var(--ice-rgb),0.35)" letter-spacing="1">RS</text>
-        </svg>
+    <div class="ymap-container reveal">
+        <div id="ymap"></div>
+        <div class="ymap-hint" id="ymapHint">Klikni mapu za zoom · prevuci za pomeranje</div>
     </div>
 </section>
+
+<!--
+    Yandex Maps JS API
+    NAPOMENA: za production preporučujemo registraciju besplatnog API key-a
+    na developer.tech.yandex.ru (limit 25.000 zahteva/dan). Bez ključa mapa
+    radi za development sa watermark-om.
+    Locale 'en_US' — labele na engleskom (univerzalno); za ćirilične nazive
+    promenite u 'ru_RU'.
+-->
+<script src="https://api-maps.yandex.ru/2.1/?lang=en_US" defer></script>
 
 <!-- ============================================================
      6. RECENZIJE
@@ -375,9 +247,10 @@ include 'partials/head.php';
         <?php foreach ($destinacije as $d): ?>
         <div class="dest-card reveal">
             <div class="dest-img-container">
-                <img src="https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=800&auto=format&fit=crop"
+                <img src="Slike/<?php echo htmlspecialchars($d['slug']); ?>/hero.jpg"
                      class="dest-img" alt="<?php echo htmlspecialchars($d['naziv']); ?>"
-                     width="800" height="500" loading="lazy" decoding="async">
+                     width="800" height="500" loading="lazy" decoding="async"
+                     onerror="this.src='https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&amp;w=800&amp;auto=format&amp;fit=crop'">
             </div>
             <div class="dest-body">
                 <h2 class="dest-title"><?php echo htmlspecialchars($d['naziv']); ?></h2>
@@ -439,94 +312,101 @@ document.querySelectorAll('.reveal').forEach((el) => {
 });
 
 /* ================================================================
-   TOTAL BUDGET KALKULATOR — sve se računa lokalno iz preloaded JSON-a
+   YANDEX MAP — Kosovo se prikazuje kao deo Srbije
    ================================================================ */
-const BUDGET_DATA = <?php echo json_encode($budget_data, JSON_UNESCAPED_UNICODE); ?>;
-const bgDest    = document.getElementById('bg-dest');
-const bgOsobe   = document.getElementById('bg-osobe');
-const bgDani    = document.getElementById('bg-dani');
-const bgSubmit  = document.getElementById('bg-submit');
-const bgResult  = document.getElementById('bg-result');
-const bgDetalji = document.getElementById('bg-detalji');
+const MAP_DEST = <?php echo json_encode($map_destinations, JSON_UNESCAPED_UNICODE); ?>;
+const BEOGRAD  = [44.8176, 20.4633];
 
-function calcBudget() {
-    const destId = parseInt(bgDest.value, 10);
-    const osobe  = Math.max(1, parseInt(bgOsobe.value, 10) || 1);
-    const dani   = Math.max(1, parseInt(bgDani.value, 10) || 1);
-
-    if (!destId || !BUDGET_DATA[destId]) {
-        bgDest.classList.add('is-error');
-        setTimeout(() => bgDest.classList.remove('is-error'), 1800);
+/* Čekaj da se Yandex API učita (defer + ymaps.ready) */
+function initYandexMap() {
+    if (typeof ymaps === 'undefined' || !ymaps.ready) {
+        /* Skripta još nije gotova — pokušaj ponovo */
+        setTimeout(initYandexMap, 100);
         return;
     }
-
-    const d = BUDGET_DATA[destId];
-
-    /* Smestaj: prosek × dani × osobe */
-    const hotelTotal = d.hotel_prosek * dani * osobe;
-
-    /* Ski pas Odrasli: izbor najbliže cene po danu */
-    let pasPerOsoba = 0;
-    if (dani <= 1)      pasPerOsoba = d.pas_1;
-    else if (dani <= 3) pasPerOsoba = d.pas_3;
-    else if (dani <= 6) pasPerOsoba = d.pas_6;
-    else                pasPerOsoba = d.pas_6 + (d.pas_1 * (dani - 6)); /* aproksimacija */
-    const pasTotal = pasPerOsoba * osobe;
-
-    /* Prevoz auto: distanca × 2 × 0.06 EUR/km + putarina × 2 (po grupi, ne po osobi) */
-    const gorivo  = d.distanca_km * 2 * 0.06;
-    const putar   = d.putarina    * 2;
-    const prevozTotal = gorivo + putar;
-
-    const total = hotelTotal + pasTotal + prevozTotal;
-
-    /* Prikazi rezultate sa animacijom */
-    setVal('bg-r-hotel',  '€' + Math.round(hotelTotal));
-    setVal('bg-r-pas',    '€' + Math.round(pasTotal));
-    setVal('bg-r-prevoz', '€' + Math.round(prevozTotal));
-    setVal('bg-r-total',  '€' + Math.round(total));
-
-    document.getElementById('bg-r-hotel-h').textContent  = `prosek €${d.hotel_prosek.toFixed(0)}/noć × ${dani} × ${osobe}`;
-    document.getElementById('bg-r-pas-h').textContent    = `Odrasli × ${osobe} × ${dani} dana`;
-    document.getElementById('bg-r-prevoz-h').textContent = `auto · ${d.distanca_km * 2} km povratno`;
-    document.getElementById('bg-r-total-h').textContent  = `okvirno za grupu od ${osobe} ${osobe === 1 ? 'osobe' : 'osoba'}`;
-
-    bgDetalji.href = 'destinacija.php?id=' + destId;
-    bgResult.classList.add('visible');
-    bgResult.setAttribute('aria-hidden', 'false');
-}
-function setVal(id, val) {
-    const el = document.getElementById(id);
-    el.classList.add('updating');
-    setTimeout(() => { el.textContent = val; el.classList.remove('updating'); }, 200);
-}
-bgSubmit.addEventListener('click', calcBudget);
-[bgDest, bgOsobe, bgDani].forEach(el => {
-    el.addEventListener('keydown', e => { if (e.key === 'Enter') calcBudget(); });
-});
-/* Auto-recalculate na promenu (UX kao u Booking-u) */
-bgDest.addEventListener('change', () => { if (bgDest.value) calcBudget(); });
-
-/* ================================================================
-   EUROPE MAP — tooltip
-   ================================================================ */
-const tooltip = document.getElementById('mapTooltip');
-const mapContainer = document.getElementById('europeMapContainer');
-if (tooltip && mapContainer) {
-    document.querySelectorAll('.map-pin').forEach(pin => {
-        pin.style.cursor = 'pointer';
-        pin.addEventListener('mouseenter', function() {
-            const { dest, country, km, ski } = this.dataset;
-            tooltip.innerHTML = `<div class="tt-dest">${dest}</div><div class="tt-country">${country}</div><div class="tt-km"><strong>${km} km</strong> od Beograda</div><div class="tt-ski">${ski}</div>`;
-            const cr = mapContainer.getBoundingClientRect();
-            const pr = this.getBoundingClientRect();
-            tooltip.style.left = (pr.left + pr.width/2 - cr.left) + 'px';
-            tooltip.style.top  = (pr.top  - cr.top - tooltip.offsetHeight - 18) + 'px';
-            tooltip.classList.add('visible');
+    ymaps.ready(() => {
+        const map = new ymaps.Map('ymap', {
+            center: [46.8, 12.0],
+            zoom: 5,
+            controls: ['zoomControl'],
+            /* yandex#map = standard street map, biće dark-inverted preko CSS-a */
+            type: 'yandex#map'
+        }, {
+            suppressMapOpenBlock: true,
+            yandexMapDisablePoiInteractivity: true
         });
-        pin.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
-        pin.addEventListener('click', () => document.getElementById('katalog').scrollIntoView({ behavior: 'smooth' }));
+        map.behaviors.disable('scrollZoom');
+
+        /* Prvi klik aktivira scroll zoom + sakriva hint */
+        const hint = document.getElementById('ymapHint');
+        let hintRemoved = false;
+        map.events.add('click', () => {
+            if (hintRemoved) return;
+            map.behaviors.enable('scrollZoom');
+            hint?.classList.add('hidden');
+            hintRemoved = true;
+        });
+
+        /* Custom pin layout — cyan ice glow */
+        const DestPin = ymaps.templateLayoutFactory.createClass(
+            '<div class="ymap-pin"><span class="ymap-pin-ping"></span><span class="ymap-pin-core"></span></div>'
+        );
+        const BgPin = ymaps.templateLayoutFactory.createClass(
+            '<div class="ymap-pin ymap-pin-bg">' +
+                '<span class="ymap-pin-ping"></span>' +
+                '<span class="ymap-pin-core"></span>' +
+                '<span class="ymap-pin-label">BEOGRAD</span>' +
+            '</div>'
+        );
+
+        /* Beograd marker */
+        const bgMarker = new ymaps.Placemark(BEOGRAD, {
+            balloonContent: '<strong>Beograd</strong><br>Polazna tačka'
+        }, {
+            iconLayout: BgPin,
+            iconShape: { type: 'Circle', coordinates: [0, 0], radius: 14 },
+            hideIconOnBalloonOpen: false
+        });
+        map.geoObjects.add(bgMarker);
+
+        /* Destinacije + linije */
+        MAP_DEST.forEach((d, i) => {
+            /* Linija od Beograda do destinacije */
+            const line = new ymaps.Polyline([BEOGRAD, [d.lat, d.lng]], {}, {
+                strokeColor: '#00e5ff',
+                strokeWidth: 1.4,
+                strokeOpacity: 0.5,
+                strokeStyle: { style: 'dash', size: 7, space: 5 }
+            });
+            map.geoObjects.add(line);
+
+            /* Pin */
+            const pin = new ymaps.Placemark([d.lat, d.lng], {
+                hintContent:
+                    '<div class="ymap-hint-card">' +
+                        '<strong>' + d.naziv + '</strong>' +
+                        '<span>' + d.zemlja + '</span>' +
+                        '<small>' + d.km + ' km od Beograda · ' + d.staze + ' km staza</small>' +
+                    '</div>'
+            }, {
+                iconLayout: DestPin,
+                iconShape: { type: 'Circle', coordinates: [0, 0], radius: 14 },
+                hideIconOnBalloonOpen: false,
+                hintCloseTimeout: 100
+            });
+            pin.events.add('click', () => {
+                window.location.href = 'destinacija.php?id=' + d.id;
+            });
+            map.geoObjects.add(pin);
+        });
     });
+}
+
+/* Pokreni inicijalizaciju kad je strana spremna */
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initYandexMap);
+} else {
+    initYandexMap();
 }
 
 /* ================================================================

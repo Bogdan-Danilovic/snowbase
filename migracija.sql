@@ -1,7 +1,14 @@
 -- ============================================================================
 -- Snowbase — Premium Alpine Travel Catalog
--- Single source of truth: kompletna schema + seed za 8 destinacija.
+-- Kompletna schema + seed za 8 ski destinacija.
 -- Pokreni u phpMyAdmin nad bazom `peak_palm`.
+--
+-- IZMENE u odnosu na prethodnu verziju:
+--  * Dodate kolone cena_2dana, cena_5dana, cena_7dana u ski_pas_cene
+--  * Dodata kolona tip_smestaja ENUM u smestaj
+--  * Dodata kolona slug u destinacije (koristi se za putanju slika)
+--  * Putanje slika prebacene na konvenciju Slike/{slug}/{tip}.jpg
+--  * Realnije cene za sezonu 2025/2026
 -- ============================================================================
 
 SET NAMES utf8mb4;
@@ -28,7 +35,7 @@ DROP TABLE IF EXISTS `destinacije`;
 DROP TABLE IF EXISTS `granicni_prelazi`;
 
 -- ----------------------------------------------------------------------------
--- 1) GRANICNI PRELAZI (globalna)
+-- 1) GRANICNI PRELAZI
 -- ----------------------------------------------------------------------------
 CREATE TABLE `granicni_prelazi` (
     `id`                  INT AUTO_INCREMENT PRIMARY KEY,
@@ -43,6 +50,7 @@ CREATE TABLE `granicni_prelazi` (
 -- ----------------------------------------------------------------------------
 CREATE TABLE `destinacije` (
     `id`                    INT AUTO_INCREMENT PRIMARY KEY,
+    `slug`                  VARCHAR(60)  NOT NULL UNIQUE,
     `naziv`                 VARCHAR(120) NOT NULL,
     `opis`                  TEXT         DEFAULT NULL,
     `zemlja`                VARCHAR(60)  DEFAULT NULL,
@@ -57,7 +65,7 @@ CREATE TABLE `destinacije` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 3) SKI INFO (1:1 sa destinacijom)
+-- 3) SKI INFO (1:1)
 -- ----------------------------------------------------------------------------
 CREATE TABLE `ski_info` (
     `destinacija_id`    INT NOT NULL PRIMARY KEY,
@@ -71,12 +79,13 @@ CREATE TABLE `ski_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 4) SMESTAJ (1:N — hoteli po destinaciji)
+-- 4) SMESTAJ (1:N) — dodat tip_smestaja
 -- ----------------------------------------------------------------------------
 CREATE TABLE `smestaj` (
     `id`                INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`    INT NOT NULL,
     `naziv`             VARCHAR(120) NOT NULL,
+    `tip_smestaja`      ENUM('hotel','apartman','pansion','chalet') NOT NULL DEFAULT 'hotel',
     `zvezdice`          TINYINT      NOT NULL DEFAULT 3,
     `kapacitet_osoba`   SMALLINT     NOT NULL DEFAULT 2,
     `cena_po_noci_eur`  DECIMAL(7,2) NOT NULL DEFAULT 0,
@@ -116,7 +125,7 @@ CREATE TABLE `vreme_prognoza` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 6) STAZE STATUS (live: otvorene/ukupno po tipu)
+-- 6) STAZE STATUS (live)
 -- ----------------------------------------------------------------------------
 CREATE TABLE `staze_status` (
     `destinacija_id`     INT NOT NULL PRIMARY KEY,
@@ -133,15 +142,18 @@ CREATE TABLE `staze_status` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 7) SKI PAS CENE (1:N)
+-- 7) SKI PAS CENE — sad sa 1/2/3/5/6/7 dana
 -- ----------------------------------------------------------------------------
 CREATE TABLE `ski_pas_cene` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
     `kategorija`      VARCHAR(40)  NOT NULL,
     `cena_1dan`       DECIMAL(7,2) NOT NULL,
+    `cena_2dana`      DECIMAL(7,2) NOT NULL,
     `cena_3dana`      DECIMAL(7,2) NOT NULL,
+    `cena_5dana`      DECIMAL(7,2) NOT NULL,
     `cena_6dana`      DECIMAL(7,2) NOT NULL,
+    `cena_7dana`      DECIMAL(7,2) NOT NULL,
     `redosled`        SMALLINT     NOT NULL DEFAULT 0,
     KEY `idx_dest` (`destinacija_id`),
     CONSTRAINT `fk_pas_dest` FOREIGN KEY (`destinacija_id`)
@@ -149,7 +161,7 @@ CREATE TABLE `ski_pas_cene` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 8) DESTINACIJE SLIKE (1:N)
+-- 8) DESTINACIJE SLIKE
 -- ----------------------------------------------------------------------------
 CREATE TABLE `destinacije_slike` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -164,7 +176,7 @@ CREATE TABLE `destinacije_slike` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 9) STAZE PUTANJE (SVG za hero mapu)
+-- 9) STAZE PUTANJE (SVG)
 -- ----------------------------------------------------------------------------
 CREATE TABLE `staze_putanje` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -180,14 +192,15 @@ CREATE TABLE `staze_putanje` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 10) TRANSPORT OPCIJE (1:N, JSON stavke)
+-- 10) TRANSPORT OPCIJE — JSON stavke + cena_po_osobi za kalkulator
 -- ----------------------------------------------------------------------------
 CREATE TABLE `transport_opcije` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
-    `tip`             VARCHAR(40)  NOT NULL DEFAULT 'bus',
+    `tip`             ENUM('bus','avion','auto') NOT NULL DEFAULT 'bus',
     `naziv`           VARCHAR(100) NOT NULL,
     `podnaslov`       VARCHAR(120) DEFAULT NULL,
+    `cena_po_osobi`   DECIMAL(7,2) NOT NULL DEFAULT 0,
     `stavke_json`     JSON         DEFAULT NULL,
     `redosled`        SMALLINT     NOT NULL DEFAULT 0,
     KEY `idx_dest` (`destinacija_id`),
@@ -196,7 +209,7 @@ CREATE TABLE `transport_opcije` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 11) OPREMA PAKETI (1:N)
+-- 11) OPREMA PAKETI
 -- ----------------------------------------------------------------------------
 CREATE TABLE `oprema_paketi` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -215,7 +228,7 @@ CREATE TABLE `oprema_paketi` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 12) SKOLA PAKETI (1:N)
+-- 12) SKOLA PAKETI
 -- ----------------------------------------------------------------------------
 CREATE TABLE `skola_paketi` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -231,7 +244,7 @@ CREATE TABLE `skola_paketi` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 13) RECENZIJE (1:N po destinaciji, NULL = homepage karusel)
+-- 13) RECENZIJE
 -- ----------------------------------------------------------------------------
 CREATE TABLE `recenzije` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -252,7 +265,7 @@ CREATE TABLE `recenzije` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 14) FAQ (NULL = globalno)
+-- 14) FAQ
 -- ----------------------------------------------------------------------------
 CREATE TABLE `faq` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -267,7 +280,7 @@ CREATE TABLE `faq` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 15) TICKER ITEMS (globalna live obavestenja)
+-- 15) TICKER ITEMS
 -- ----------------------------------------------------------------------------
 CREATE TABLE `ticker_items` (
     `id`         INT AUTO_INCREMENT PRIMARY KEY,
@@ -284,107 +297,107 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- Granicni prelazi
 INSERT INTO `granicni_prelazi` (`id`, `naziv`, `u_drzavu`, `tipicno_cekanje_min`) VALUES
-(1, 'Horgoš',     'Mađarska', 30),
-(2, 'Batrovci',   'Hrvatska', 25),
-(3, 'Šid',        'Hrvatska', 15),
-(4, 'Vrška Čuka', 'Bugarska', 20),
-(5, 'Gradina',    'Bugarska', 20),
+(1, 'Horgoš',     'Mađarska',      30),
+(2, 'Batrovci',   'Hrvatska',      25),
+(3, 'Šid',        'Hrvatska',      15),
+(4, 'Vrška Čuka', 'Bugarska',      20),
+(5, 'Gradina',    'Bugarska',      20),
 (6, 'Preševo',    'S. Makedonija', 15),
-(7, '—',          'Srbija',   0);
+(7, '—',          'Srbija',         0);
 
 -- ============================================================================
--- DESTINACIJE (8 ukupno)
+-- DESTINACIJE (8 ski centara)
 -- ============================================================================
-INSERT INTO `destinacije` (`id`, `naziv`, `opis`, `zemlja`, `region`, `lat`, `lng`, `distanca_od_bg_km`, `prosecna_putarina_eur`, `granicni_prelaz_id`) VALUES
-(1, 'Les Orres',
+INSERT INTO `destinacije` (`id`, `slug`, `naziv`, `opis`, `zemlja`, `region`, `lat`, `lng`, `distanca_od_bg_km`, `prosecna_putarina_eur`, `granicni_prelaz_id`) VALUES
+(1, 'les-orres', 'Les Orres',
    'Skrivena perla Francuskih Alpa — staze pod stalnim suncem, kompaktno selo i savršena dnevna preglednost. Idealno za porodice i one koji traže privatnost daleko od gužve.',
    'Francuska', 'Francuske Alpe', 44.4553, 6.5372, 1580, 110.00, 1),
-(2, 'Chamonix-Mont-Blanc',
+(2, 'chamonix', 'Chamonix-Mont-Blanc',
    'Legendarno utočište alpinista. U podnožju najvišeg evropskog vrha, sa 4 odvojena ski područja i autentičnom francuskom čaršijom. Mecca za napredne skijaše.',
    'Francuska', 'Francuske Alpe', 45.9237, 6.8694, 1530, 115.00, 1),
-(3, 'Val Thorens',
+(3, 'val-thorens', 'Val Thorens',
    'Najviše skijalište Evrope na 2300m — Les 3 Vallées, 600 km povezanih staza, garantovani sneg do maja. Pravi raj za pisteur-e koji ne posustaju.',
    'Francuska', 'Francuske Alpe', 45.2980, 6.5800, 1620, 120.00, 1),
-(4, 'Zermatt',
-   'Pod Matterhornom — staklena selo bez automobila, pet hiljada metara nadmorske visine i ski pas povezan sa Cervinia-om u Italiji. Definicija švajcarske eleganciji.',
+(4, 'zermatt', 'Zermatt',
+   'Pod Matterhornom — stakleno selo bez automobila, pet hiljada metara nadmorske visine i ski pas povezan sa Cervinia-om u Italiji. Definicija švajcarske elegancije.',
    'Švajcarska', 'Valais', 46.0207, 7.7491, 1350, 95.00, 1),
-(5, 'Cortina d''Ampezzo',
+(5, 'cortina', 'Cortina d''Ampezzo',
    'Kraljica Dolomita — domaćin Olimpijade 2026. Bleda krečnjačka zubaca, žute fasade i 1200 km povezanih staza u Dolomiti Superski sistemu.',
    'Italija', 'Dolomiti', 46.5396, 12.1357, 1190, 75.00, 1),
-(6, 'St. Anton am Arlberg',
+(6, 'st-anton', 'St. Anton am Arlberg',
    'Kolevka alpskog skijanja — gde je rođen moderni skijaški sport 1901. Apres-ski legenda, Schindlerov Kar, 305 km povezanih staza Arlberg sistema.',
    'Austrija', 'Tirol', 46.7497, 10.2702, 1025, 65.00, 1),
-(7, 'Kopaonik',
+(7, 'kopaonik', 'Kopaonik',
    'Krov Srbije — najveći domaći ski centar, 60 km staza, 25 žičara. Komforna alternativa Alpima bez graničnih prelaza, sa srpskom hranom i razumnim cenama.',
    'Srbija', 'Centralna Srbija', 43.2860, 20.8164, 280, 0.00, 7),
-(8, 'Bansko',
+(8, 'bansko', 'Bansko',
    'Najpristupačnije pravo skijalište regiona — 75 km staza, gondola direktno iz centra grada, balkanska gostoljubivost i cene 30% niže od Alpa.',
    'Bugarska', 'Pirin', 41.8378, 23.4884, 530, 18.00, 5);
 
 -- ============================================================================
--- SKI INFO (broj_zicara, ukupno km, plave/crvene/crne km)
+-- SKI INFO
 -- ============================================================================
 INSERT INTO `ski_info` (`destinacija_id`, `ukupno_staza_km`, `plave_staze_km`, `crvene_staze_km`, `crne_staze_km`, `broj_zicara`) VALUES
-(1, 100, 35, 50, 15, 17),   -- Les Orres
-(2, 170, 50, 90, 30, 49),   -- Chamonix
-(3, 600, 250, 280, 70, 31), -- Val Thorens
-(4, 360, 110, 195, 55, 53), -- Zermatt
-(5, 140, 60, 65, 15, 34),   -- Cortina
-(6, 305, 130, 145, 30, 87), -- St. Anton
-(7, 60,  29, 21,  10, 25),  -- Kopaonik
-(8, 75,  35, 30,  10, 14);  -- Bansko
+(1, 100, 35, 50, 15, 17),
+(2, 170, 50, 90, 30, 49),
+(3, 600, 250, 280, 70, 31),
+(4, 360, 110, 195, 55, 53),
+(5, 140, 60, 65, 15, 34),
+(6, 305, 130, 145, 30, 87),
+(7, 60,  29, 21,  10, 25),
+(8, 75,  35, 30,  10, 14);
 
 -- ============================================================================
--- SMESTAJ (2-3 hotela po destinaciji)
+-- SMESTAJ (2-3 objekta po destinaciji, tip + slika putanja)
 -- ============================================================================
-INSERT INTO `smestaj` (`destinacija_id`, `naziv`, `zvezdice`, `kapacitet_osoba`, `cena_po_noci_eur`, `slika_url`, `redosled`) VALUES
+INSERT INTO `smestaj` (`destinacija_id`, `naziv`, `tip_smestaja`, `zvezdice`, `kapacitet_osoba`, `cena_po_noci_eur`, `slika_url`, `redosled`) VALUES
 -- Les Orres
-(1, 'Hôtel Le Mélèze',       4, 2,  95, 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=800&auto=format&fit=crop', 10),
-(1, 'Résidence Les Crêtes',  3, 4,  68, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800&auto=format&fit=crop', 20),
-(1, 'Chalet du Sommet',      5, 6, 180, 'https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=800&auto=format&fit=crop', 30),
+(1, 'Hôtel Le Mélèze',          'hotel',    4, 2,  98, 'Slike/les-orres/h1.jpg', 10),
+(1, 'Résidence Les Crêtes',     'apartman', 3, 4,  72, 'Slike/les-orres/h2.jpg', 20),
+(1, 'Chalet du Sommet',         'chalet',   5, 6, 185, 'Slike/les-orres/h3.jpg', 30),
 -- Chamonix
-(2, 'Hôtel Mont-Blanc',       5, 2, 240, 'https://images.unsplash.com/photo-1455587734955-081b22074882?q=80&w=800&auto=format&fit=crop', 10),
-(2, 'Auberge du Bois Prin',   4, 2, 140, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop', 20),
-(2, 'Chamonix Lodge',         3, 4,  85, 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=800&auto=format&fit=crop', 30),
+(2, 'Hôtel Mont-Blanc',         'hotel',    5, 2, 245, 'Slike/chamonix/h1.jpg', 10),
+(2, 'Auberge du Bois Prin',     'hotel',    4, 2, 145, 'Slike/chamonix/h2.jpg', 20),
+(2, 'Chamonix Lodge',           'pansion',  3, 4,  88, 'Slike/chamonix/h3.jpg', 30),
 -- Val Thorens
-(3, 'Altapura Hotel',         5, 2, 320, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800&auto=format&fit=crop', 10),
-(3, 'Résidence Le Cheval Blanc', 4, 4, 155, 'https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=800&auto=format&fit=crop', 20),
+(3, 'Altapura Hotel',           'hotel',    5, 2, 325, 'Slike/val-thorens/h1.jpg', 10),
+(3, 'Résidence Le Cheval Blanc','apartman', 4, 4, 160, 'Slike/val-thorens/h2.jpg', 20),
 -- Zermatt
-(4, 'Hotel Zermatterhof',      5, 2, 380, 'https://images.unsplash.com/photo-1455587734955-081b22074882?q=80&w=800&auto=format&fit=crop', 10),
-(4, 'The Omnia Mountain Lodge', 5, 2, 420, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop', 20),
-(4, 'Hotel Bahnhof',           3, 4,  90, 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=800&auto=format&fit=crop', 30),
+(4, 'Hotel Zermatterhof',       'hotel',    5, 2, 385, 'Slike/zermatt/h1.jpg', 10),
+(4, 'The Omnia Mountain Lodge', 'chalet',   5, 2, 425, 'Slike/zermatt/h2.jpg', 20),
+(4, 'Hotel Bahnhof',            'hotel',    3, 4,  95, 'Slike/zermatt/h3.jpg', 30),
 -- Cortina
-(5, 'Cristallo Hotel Spa',     5, 2, 285, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800&auto=format&fit=crop', 10),
-(5, 'Hotel de la Poste',       4, 2, 165, 'https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=800&auto=format&fit=crop', 20),
-(5, 'Camina Suite Spa',        4, 4, 145, 'https://images.unsplash.com/photo-1455587734955-081b22074882?q=80&w=800&auto=format&fit=crop', 30),
+(5, 'Cristallo Hotel Spa',      'hotel',    5, 2, 290, 'Slike/cortina/h1.jpg', 10),
+(5, 'Hotel de la Poste',        'hotel',    4, 2, 170, 'Slike/cortina/h2.jpg', 20),
+(5, 'Camina Suite Spa',         'apartman', 4, 4, 148, 'Slike/cortina/h3.jpg', 30),
 -- St. Anton
-(6, 'Hotel Schwarzer Adler',   4, 2, 180, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop', 10),
-(6, 'Hotel Karl Schranz',      4, 2, 165, 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=800&auto=format&fit=crop', 20),
-(6, 'Pension Daniela',         3, 3,  75, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800&auto=format&fit=crop', 30),
+(6, 'Hotel Schwarzer Adler',    'hotel',    4, 2, 185, 'Slike/st-anton/h1.jpg', 10),
+(6, 'Hotel Karl Schranz',       'hotel',    4, 2, 168, 'Slike/st-anton/h2.jpg', 20),
+(6, 'Pension Daniela',          'pansion',  3, 3,  78, 'Slike/st-anton/h3.jpg', 30),
 -- Kopaonik
-(7, 'Grand Hotel & Spa',       4, 2,  95, 'https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=800&auto=format&fit=crop', 10),
-(7, 'MK Mountain Resort',      4, 2,  85, 'https://images.unsplash.com/photo-1455587734955-081b22074882?q=80&w=800&auto=format&fit=crop', 20),
-(7, 'Apartmani Konaci',        3, 4,  55, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop', 30),
+(7, 'Grand Hotel & Spa',        'hotel',    4, 2,  98, 'Slike/kopaonik/h1.jpg', 10),
+(7, 'MK Mountain Resort',       'hotel',    4, 2,  88, 'Slike/kopaonik/h2.jpg', 20),
+(7, 'Apartmani Konaci',         'apartman', 3, 4,  56, 'Slike/kopaonik/h3.jpg', 30),
 -- Bansko
-(8, 'Kempinski Grand Arena',   5, 2, 145, 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=800&auto=format&fit=crop', 10),
-(8, 'Lucky Bansko Aparthotel', 4, 4,  72, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800&auto=format&fit=crop', 20),
-(8, 'Hotel Strazhite',         3, 2,  48, 'https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=800&auto=format&fit=crop', 30);
+(8, 'Kempinski Grand Arena',    'hotel',    5, 2, 148, 'Slike/bansko/h1.jpg', 10),
+(8, 'Lucky Bansko Aparthotel',  'apartman', 4, 4,  74, 'Slike/bansko/h2.jpg', 20),
+(8, 'Hotel Strazhite',          'hotel',    3, 2,  50, 'Slike/bansko/h3.jpg', 30);
 
 -- ============================================================================
 -- VREME TRENUTNO
 -- ============================================================================
 INSERT INTO `vreme_trenutno` (`destinacija_id`, `temp_c`, `temp_osecaj_c`, `sneg_dno_cm`, `sneg_vrh_cm`, `uslovi`, `vidljivost`) VALUES
-(1,  -3,  -8,  45, 185, 'Sunčano',  'Odlična (>10 km)'),
-(2,  -6, -12,  85, 240, 'Pretežno sunčano', 'Odlična (>10 km)'),
-(3,  -9, -15, 120, 310, 'Sneg', 'Slaba (1-3 km)'),
-(4,  -7, -13,  95, 280, 'Sunčano', 'Odlična (>10 km)'),
-(5,  -2,  -6,  60, 165, 'Oblačno', 'Dobra (5-10 km)'),
-(6,  -4,  -9,  70, 195, 'Pretežno oblačno', 'Dobra (5-10 km)'),
-(7,  -1,  -5,  35, 110, 'Sunčano', 'Odlična (>10 km)'),
-(8,  -3,  -7,  50, 140, 'Sunčano', 'Odlična (>10 km)');
+(1,  -3,  -8,  45, 185, 'Sunčano',           'Odlična (>10 km)'),
+(2,  -6, -12,  85, 240, 'Pretežno sunčano',  'Odlična (>10 km)'),
+(3,  -9, -15, 120, 310, 'Sneg',              'Slaba (1-3 km)'),
+(4,  -7, -13,  95, 280, 'Sunčano',           'Odlična (>10 km)'),
+(5,  -2,  -6,  60, 165, 'Oblačno',           'Dobra (5-10 km)'),
+(6,  -4,  -9,  70, 195, 'Pretežno oblačno',  'Dobra (5-10 km)'),
+(7,  -1,  -5,  35, 110, 'Sunčano',           'Odlična (>10 km)'),
+(8,  -3,  -7,  50, 140, 'Sunčano',           'Odlična (>10 km)');
 
 -- ============================================================================
--- VREME PROGNOZA (3 dana po destinaciji)
+-- VREME PROGNOZA
 -- ============================================================================
 INSERT INTO `vreme_prognoza` (`destinacija_id`, `dan_skraceno`, `temp_min`, `temp_max`, `stanje`, `redosled`) VALUES
 (1, 'PON', -8,  -4, 'Oblačno', 1), (1, 'UTO', -12, -7, 'Sneg', 2), (1, 'SRE', -5,  -1, 'Sunčano', 3),
@@ -397,7 +410,7 @@ INSERT INTO `vreme_prognoza` (`destinacija_id`, `dan_skraceno`, `temp_min`, `tem
 (8, 'PON', -7,  -3, 'Sunčano', 1), (8, 'UTO', -5,  -2, 'Pretežno sunčano', 2), (8, 'SRE', -4,  -1, 'Oblačno', 3);
 
 -- ============================================================================
--- STAZE STATUS (otvorene/ukupno)
+-- STAZE STATUS
 -- ============================================================================
 INSERT INTO `staze_status` (`destinacija_id`, `plave_otvorene`, `plave_ukupno`, `crvene_otvorene`, `crvene_ukupno`, `crne_otvorene`, `crne_ukupno`, `zicara_aktivnih`, `zicara_ukupno`) VALUES
 (1, 12, 15,  8, 10,  2,  4, 14, 17),
@@ -410,50 +423,98 @@ INSERT INTO `staze_status` (`destinacija_id`, `plave_otvorene`, `plave_ukupno`, 
 (8, 12, 15,  8, 11,  3,  4, 12, 14);
 
 -- ============================================================================
--- SKI PAS CENE (4 kategorije po destinaciji)
+-- SKI PAS CENE — realne cene za 2025/2026 sezonu
+-- 1d / 2d / 3d / 5d / 6d / 7d
 -- ============================================================================
-INSERT INTO `ski_pas_cene` (`destinacija_id`, `kategorija`, `cena_1dan`, `cena_3dana`, `cena_6dana`, `redosled`) VALUES
--- Les Orres
-(1,'Odrasli',42,115,195,10),(1,'Studenti',35,95,162,20),(1,'Deca',25,68,112,30),(1,'Senior',32,88,148,40),
--- Chamonix
-(2,'Odrasli',64,177,310,10),(2,'Studenti',54,150,265,20),(2,'Deca',38,108,188,30),(2,'Senior',54,150,265,40),
--- Val Thorens
-(3,'Odrasli',62,179,326,10),(3,'Studenti',52,152,278,20),(3,'Deca',37,108,195,30),(3,'Senior',56,160,294,40),
--- Zermatt
-(4,'Odrasli',79,222,398,10),(4,'Studenti',67,189,338,20),(4,'Deca',40,111,199,30),(4,'Senior',71,200,358,40),
--- Cortina
-(5,'Odrasli',61,158,256,10),(5,'Studenti',54,141,232,20),(5,'Deca',43,111,179,30),(5,'Senior',54,141,232,40),
--- St. Anton
-(6,'Odrasli',64,180,308,10),(6,'Studenti',57,162,277,20),(6,'Deca',32,90,154,30),(6,'Senior',57,162,277,40),
--- Kopaonik
-(7,'Odrasli',38,102,182,10),(7,'Studenti',32,86,154,20),(7,'Deca',22,60,110,30),(7,'Senior',30,80,144,40),
+INSERT INTO `ski_pas_cene` (`destinacija_id`, `kategorija`, `cena_1dan`, `cena_2dana`, `cena_3dana`, `cena_5dana`, `cena_6dana`, `cena_7dana`, `redosled`) VALUES
+-- Les Orres (Francuska)
+(1,'Odrasli',  44,  82, 118, 175, 198, 222, 10),
+(1,'Studenti', 37,  68, 100, 148, 168, 188, 20),
+(1,'Deca',     26,  48,  72, 105, 118, 132, 30),
+(1,'Senior',   34,  64,  92, 138, 156, 175, 40),
+-- Chamonix Mont-Blanc (premium)
+(2,'Odrasli',  68, 128, 184, 270, 312, 340, 10),
+(2,'Studenti', 58, 108, 156, 230, 266, 290, 20),
+(2,'Deca',     40,  74, 112, 165, 190, 210, 30),
+(2,'Senior',   58, 108, 156, 230, 266, 290, 40),
+-- Val Thorens (3 Vallées — najveće)
+(3,'Odrasli',  72, 138, 198, 295, 348, 378, 10),
+(3,'Studenti', 60, 116, 168, 250, 296, 322, 20),
+(3,'Deca',     42,  80, 118, 175, 208, 226, 30),
+(3,'Senior',   64, 122, 175, 262, 310, 336, 40),
+-- Zermatt (Švajcarska — najskuplje)
+(4,'Odrasli',  84, 160, 232, 348, 412, 448, 10),
+(4,'Studenti', 71, 136, 196, 296, 350, 380, 20),
+(4,'Deca',     42,  80, 116, 174, 206, 224, 30),
+(4,'Senior',   76, 144, 210, 314, 372, 404, 40),
+-- Cortina d'Ampezzo (Dolomiti)
+(5,'Odrasli',  64, 122, 168, 232, 268, 290, 10),
+(5,'Studenti', 56, 108, 148, 208, 240, 260, 20),
+(5,'Deca',     45,  86, 120, 168, 192, 210, 30),
+(5,'Senior',   56, 108, 148, 208, 240, 260, 40),
+-- St. Anton (Arlberg)
+(6,'Odrasli',  67, 128, 186, 274, 318, 345, 10),
+(6,'Studenti', 60, 114, 168, 248, 286, 310, 20),
+(6,'Deca',     34,  64,  94, 138, 160, 174, 30),
+(6,'Senior',   60, 114, 168, 248, 286, 310, 40),
+-- Kopaonik (domaće — najpovoljnije Alpa-like)
+(7,'Odrasli',  40,  74, 106, 158, 185, 205, 10),
+(7,'Studenti', 33,  62,  90, 134, 158, 175, 20),
+(7,'Deca',     23,  44,  62,  94, 110, 122, 30),
+(7,'Senior',   31,  58,  84, 124, 148, 164, 40),
 -- Bansko
-(8,'Odrasli',43,118,205,10),(8,'Studenti',36,99,172,20),(8,'Deca',24,66,114,30),(8,'Senior',36,99,172,40);
+(8,'Odrasli',  45,  84, 122, 178, 208, 228, 10),
+(8,'Studenti', 38,  72, 104, 152, 176, 196, 20),
+(8,'Deca',     25,  47,  68,  98, 116, 128, 30),
+(8,'Senior',   38,  72, 104, 152, 176, 196, 40);
 
 -- ============================================================================
--- DESTINACIJE SLIKE (hero + mapa_staza po destinaciji)
+-- DESTINACIJE SLIKE — Slike/{slug}/{tip}.jpg konvencija
 -- ============================================================================
 INSERT INTO `destinacije_slike` (`destinacija_id`, `tip`, `url`, `alt`, `redosled`) VALUES
-(1,'mapa_staza','Slike/les_orres_mapa.jpg','Mapa staza Les Orres',1),
-(1,'gallery','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Les Orres staza',1),
-(1,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Les Orres panorama',2),
-(2,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza Chamonix',1),
-(2,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Chamonix Mont Blanc',1),
-(3,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza Val Thorens',1),
-(3,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Val Thorens vrh',1),
-(4,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza Zermatt',1),
-(4,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Matterhorn',1),
-(5,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza Cortina',1),
-(5,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Dolomiti',1),
-(6,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza St. Anton',1),
-(6,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Arlberg',1),
-(7,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza Kopaonik',1),
-(7,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Kopaonik vrh',1),
-(8,'mapa_staza','https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=1200&auto=format&fit=crop','Mapa staza Bansko',1),
-(8,'gallery','https://images.unsplash.com/photo-1517825738774-7de9363ef735?q=80&w=1200&auto=format&fit=crop','Pirin planina',1);
+-- Les Orres
+(1,'mapa_staza', 'Slike/les-orres/mapa.jpg',  'Mapa staza Les Orres',     1),
+(1,'hero',       'Slike/les-orres/hero.jpg',  'Les Orres panorama',       1),
+(1,'gallery',    'Slike/les-orres/g1.jpg',    'Les Orres staze',          1),
+(1,'gallery',    'Slike/les-orres/g2.jpg',    'Les Orres selo',           2),
+-- Chamonix
+(2,'mapa_staza', 'Slike/chamonix/mapa.jpg',   'Mapa staza Chamonix',      1),
+(2,'hero',       'Slike/chamonix/hero.jpg',   'Mont Blanc panorama',      1),
+(2,'gallery',    'Slike/chamonix/g1.jpg',     'Chamonix čaršija',         1),
+(2,'gallery',    'Slike/chamonix/g2.jpg',     'Aiguille du Midi',         2),
+-- Val Thorens
+(3,'mapa_staza', 'Slike/val-thorens/mapa.jpg','Mapa staza Val Thorens',   1),
+(3,'hero',       'Slike/val-thorens/hero.jpg','Val Thorens vrh',          1),
+(3,'gallery',    'Slike/val-thorens/g1.jpg',  '3 Vallées panorama',       1),
+(3,'gallery',    'Slike/val-thorens/g2.jpg',  'Cime Caron',                2),
+-- Zermatt
+(4,'mapa_staza', 'Slike/zermatt/mapa.jpg',    'Mapa staza Zermatt',       1),
+(4,'hero',       'Slike/zermatt/hero.jpg',    'Matterhorn',                1),
+(4,'gallery',    'Slike/zermatt/g1.jpg',      'Zermatt selo',              1),
+(4,'gallery',    'Slike/zermatt/g2.jpg',      'Klein Matterhorn',          2),
+-- Cortina
+(5,'mapa_staza', 'Slike/cortina/mapa.jpg',    'Mapa staza Cortina',        1),
+(5,'hero',       'Slike/cortina/hero.jpg',    'Dolomiti panorama',         1),
+(5,'gallery',    'Slike/cortina/g1.jpg',      'Tofana',                    1),
+(5,'gallery',    'Slike/cortina/g2.jpg',      'Cortina centar',            2),
+-- St. Anton
+(6,'mapa_staza', 'Slike/st-anton/mapa.jpg',   'Mapa staza St. Anton',      1),
+(6,'hero',       'Slike/st-anton/hero.jpg',   'St. Anton panorama',        1),
+(6,'gallery',    'Slike/st-anton/g1.jpg',     'Galzig',                    1),
+(6,'gallery',    'Slike/st-anton/g2.jpg',     'Schindler Kar',             2),
+-- Kopaonik
+(7,'mapa_staza', 'Slike/kopaonik/mapa.jpg',   'Mapa staza Kopaonik',       1),
+(7,'hero',       'Slike/kopaonik/hero.jpg',   'Kopaonik panorama',         1),
+(7,'gallery',    'Slike/kopaonik/g1.jpg',     'Pančićev vrh',              1),
+(7,'gallery',    'Slike/kopaonik/g2.jpg',     'Sunčana dolina',            2),
+-- Bansko
+(8,'mapa_staza', 'Slike/bansko/mapa.jpg',     'Mapa staza Bansko',         1),
+(8,'hero',       'Slike/bansko/hero.jpg',     'Pirin planina',             1),
+(8,'gallery',    'Slike/bansko/g1.jpg',       'Bansko gondola',            1),
+(8,'gallery',    'Slike/bansko/g2.jpg',       'Plato staze',               2);
 
 -- ============================================================================
--- STAZE PUTANJE (3 staze po destinaciji — placeholder SVG curves)
+-- STAZE PUTANJE (3 placeholder curves po destinaciji)
 -- ============================================================================
 INSERT INTO `staze_putanje` (`destinacija_id`, `tip_klasa`, `naziv`, `svg_d_putanja`, `duzina_km`, `redosled`) VALUES
 -- Les Orres
@@ -490,33 +551,44 @@ INSERT INTO `staze_putanje` (`destinacija_id`, `tip_klasa`, `naziv`, `svg_d_puta
 (8,'crna','Tomba','M 240 80 Q 320 200 410 300', 4.5, 3);
 
 -- ============================================================================
--- TRANSPORT OPCIJE (bus + avion + auto po destinaciji)
--- Stavke se generišu kroz formule (distanca, putarina) za realnost.
+-- TRANSPORT OPCIJE
+-- Cene se izračunavaju kroz distancu (auto), realističnu agencijsku cenu (bus)
+-- ili paušal (avion + transfer).
 -- ============================================================================
-INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `stavke_json`, `redosled`)
-SELECT id, 'bus', 'Agencijski Autobus', 'Direktna linija',
+-- BUS (agencijski) — približno 55 EUR/100km za povratnu kartu
+INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `cena_po_osobi`, `stavke_json`, `redosled`)
+SELECT id, 'bus', 'Agencijski Autobus', 'Direktna linija iz Beograda',
+    ROUND(distanca_od_bg_km * 0.085, 0),
     JSON_ARRAY(
         JSON_OBJECT('label','Polazak',     'vrednost','Sava Centar, 22:00h'),
         JSON_OBJECT('label','Trajanje',    'vrednost', CONCAT('~', ROUND(distanca_od_bg_km/80), 'h vožnje')),
         JSON_OBJECT('label','Povratak',    'vrednost','Nedeljom, 14:00h'),
         JSON_OBJECT('label','Prtljag',     'vrednost','Kofer + ski torba'),
-        JSON_OBJECT('label','Cena prevoza','vrednost', CONCAT(ROUND(distanca_od_bg_km*0.055), ' EUR / osobi'))
+        JSON_OBJECT('label','Cena karte',  'vrednost', CONCAT(ROUND(distanca_od_bg_km * 0.085, 0), ' EUR / osobi'))
     ), 10
 FROM `destinacije`;
 
-INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `stavke_json`, `redosled`)
+-- AVION + Transfer — paušal po zoni (250 EUR za Alpe, 180 EUR za Bansko/Bugarska, 0 za Kopaonik)
+INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `cena_po_osobi`, `stavke_json`, `redosled`)
 SELECT id, 'avion', 'Avion + Transfer', 'Najbrža opcija',
+    CASE
+        WHEN zemlja = 'Srbija' THEN 0
+        WHEN zemlja = 'Bugarska' THEN 180
+        ELSE 250
+    END,
     JSON_ARRAY(
-        JSON_OBJECT('label','Aerodrom',          'vrednost','BEG - Najbliži'),
-        JSON_OBJECT('label','Let',               'vrednost','~2h'),
+        JSON_OBJECT('label','Aerodrom',          'vrednost', CASE WHEN zemlja='Srbija' THEN 'Nije primenljivo' ELSE 'BEG - Najbliži' END),
+        JSON_OBJECT('label','Let',               'vrednost', CASE WHEN zemlja='Srbija' THEN '—' ELSE '~2h' END),
         JSON_OBJECT('label','Transfer',          'vrednost','Aerodrom - Hotel'),
         JSON_OBJECT('label','Trajanje transfera','vrednost','~1.5h'),
-        JSON_OBJECT('label','Šatl cena',         'vrednost','35 EUR / osobi')
+        JSON_OBJECT('label','Paket cena',        'vrednost', CONCAT(
+            CASE WHEN zemlja='Srbija' THEN '—' WHEN zemlja='Bugarska' THEN '180' ELSE '250' END, ' EUR / osobi'))
     ), 20
 FROM `destinacije`;
 
-INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `stavke_json`, `redosled`)
-SELECT d.id, 'auto', 'Sopstveni Auto', CONCAT(d.distanca_od_bg_km,' km od Beograda'),
+-- AUTO — cena 0 (računa se kroz kalkulator iz potrošnje + putarine)
+INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `cena_po_osobi`, `stavke_json`, `redosled`)
+SELECT d.id, 'auto', 'Sopstveni Auto', CONCAT(d.distanca_od_bg_km,' km od Beograda'), 0,
     JSON_ARRAY(
         JSON_OBJECT('label','Putarina',       'vrednost', CONCAT(d.prosecna_putarina_eur*2, ' EUR povratno')),
         JSON_OBJECT('label','Zimska oprema',  'vrednost','Obavezna'),
@@ -525,7 +597,7 @@ SELECT d.id, 'auto', 'Sopstveni Auto', CONCAT(d.distanca_od_bg_km,' km od Beogra
 FROM `destinacije` d LEFT JOIN `granicni_prelazi` gp ON gp.id = d.granicni_prelaz_id;
 
 -- ============================================================================
--- OPREMA PAKETI (Starter + Premium za sve)
+-- OPREMA PAKETI
 -- ============================================================================
 INSERT INTO `oprema_paketi` (`destinacija_id`, `naziv`, `badge`, `opis`, `cena_eur`, `includes_json`, `napomena`, `preporuceno`, `redosled`)
 SELECT id, 'Starter Komplet', 'Ekonomični',
@@ -544,7 +616,7 @@ SELECT id, 'Expert Performance', 'Premium',
 FROM `destinacije`;
 
 -- ============================================================================
--- SKOLA PAKETI (4 paketa po destinaciji)
+-- SKOLA PAKETI
 -- ============================================================================
 INSERT INTO `skola_paketi` (`destinacija_id`, `naziv`, `opis`, `cena_eur`, `jedinica`, `redosled`)
 SELECT id, 'Grupni čas (do 6 osoba)', '2h · Svi nivoi · Srpski / Engleski', 18, 'osobi', 10 FROM `destinacije`
@@ -553,9 +625,8 @@ UNION ALL SELECT id, '5-dnevni grupni kurs',    '2h dnevno · Sve uzraste · Ser
 UNION ALL SELECT id, 'Snowboard starter',       '3h · Početnici · Oprema uključena',    48, 'osobi', 40 FROM `destinacije`;
 
 -- ============================================================================
--- RECENZIJE (homepage karusel + per-destinacija)
+-- RECENZIJE — homepage karusel + per-destinacija
 -- ============================================================================
--- Homepage karusel (destinacija_id = NULL, na_homepage=1)
 INSERT INTO `recenzije` (`destinacija_id`,`ime`,`avatar`,`lokacija`,`tekst`,`ocena`,`datum_prikaza`,`na_homepage`,`redosled`) VALUES
 (NULL,'Marija T.','MT','Les Orres, Francuska',
  'Neverovatno iskustvo! Staze su savršeno pripremljene, sneg prašinast celu nedelju. Organizacija Snowbase bila je besprekorna od prvog do poslednjeg dana.',
@@ -570,7 +641,6 @@ INSERT INTO `recenzije` (`destinacija_id`,`ime`,`avatar`,`lokacija`,`tekst`,`oce
  'Sve savršeno isplanirano — od polaska iz Beograda do povratka, nula stresa. Kalkulator je bio tačan do poslednjeg evra.',
  5,'Januar 2026.',1,40);
 
--- Per-destinacija recenzije (2 po destinaciji)
 INSERT INTO `recenzije` (`destinacija_id`,`ime`,`tekst`,`ocena`,`datum_prikaza`,`tagovi`,`redosled`)
 SELECT id,'Marko D.',
     'Savršeno organizovan put. Staze prelepe, hotel taman koliko nam treba. Ekipa Snowbase brza i profesionalna.',
@@ -580,11 +650,11 @@ FROM `destinacije`;
 INSERT INTO `recenzije` (`destinacija_id`,`ime`,`tekst`,`ocena`,`datum_prikaza`,`tagovi`,`redosled`)
 SELECT id,'Jelena & Vuk',
     'Treća sezona zaredom. Cena je fer, kvalitet izuzetan. Ski škola savršena za našu decu — preporučujemo svima.',
-    5,'Februar 2026.', JSON_ARRAY('Porodično ★★★★★','Smestaj ★★★★☆'), 20
+    5,'Februar 2026.', JSON_ARRAY('Porodično ★★★★★','Smeštaj ★★★★☆'), 20
 FROM `destinacije`;
 
 -- ============================================================================
--- FAQ (globalna — destinacija_id NULL)
+-- FAQ (globalni)
 -- ============================================================================
 INSERT INTO `faq` (`destinacija_id`,`pitanje`,`odgovor`,`redosled`) VALUES
 (NULL,'Da li je ski pas uključen u cenu aranžmana?',
@@ -597,7 +667,7 @@ INSERT INTO `faq` (`destinacija_id`,`pitanje`,`odgovor`,`redosled`) VALUES
  'Rezervacija se vrši minimum 48h pre željenog termina. Popunite kontakt obrazac na kraju stranice ili nas direktno kontaktirajte. Za grupe od 6 i više osoba odobravamo 15% popusta na kompletan paket opreme.',40);
 
 -- ============================================================================
--- TICKER ITEMS (globalni)
+-- TICKER ITEMS
 -- ============================================================================
 INSERT INTO `ticker_items` (`tekst`,`redosled`) VALUES
 ('Les Orres: 185 cm snega na vrhu · Prajder odličan',10),
@@ -606,13 +676,13 @@ INSERT INTO `ticker_items` (`tekst`,`redosled`) VALUES
 ('Simplon prevoj (CH): Obavezni lanci ili zimske gume',40),
 ('Val Thorens: 310 cm snega · Sezona traje do kraja aprila',50),
 ('Horgoš (SRB/HUN): Bez zadržavanja',60),
-('Innsbruck / St. Anton: -6 C · Sunčano · Sve staze otvorene',70),
+('Innsbruck / St. Anton: -6°C · Sunčano · Sve staze otvorene',70),
 ('Brenner autoput (AT): Zimska oprema obavezna iznad 700 m',80),
 ('Cortina d''Ampezzo: 165 cm sveže snežne podloge',90),
 ('Šid (SRB/HRV): Zadržavanje ~15 min',100),
 ('Sella Ronda (IT): 40 km runde · Perfektni uslovi',110),
 ('Zermatt: 280 cm snega na Matterhornskom platou',120),
-('Kopaonik: -1 C · Sunčano · Domaća sezona u punom jeku',130),
+('Kopaonik: -1°C · Sunčano · Domaća sezona u punom jeku',130),
 ('Bansko: 140 cm snega · Najpristupačnija opcija u regionu',140);
 
 -- ============================================================================

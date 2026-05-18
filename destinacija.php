@@ -51,7 +51,7 @@ $hoteli         = fetchByDest($pdo, "SELECT * FROM smestaj WHERE destinacija_id 
 $vreme          = fetchOneByDest($pdo, "SELECT * FROM vreme_trenutno WHERE destinacija_id = ?", $id);
 $prognoza       = fetchByDest($pdo, "SELECT * FROM vreme_prognoza WHERE destinacija_id = ? ORDER BY redosled, id LIMIT 7", $id);
 $staze_status   = fetchOneByDest($pdo, "SELECT * FROM staze_status WHERE destinacija_id = ?", $id);
-$ski_pas_cene   = fetchByDest($pdo, "SELECT kategorija, cena_1dan AS dan1, cena_3dana AS dan3, cena_6dana AS dan6 FROM ski_pas_cene WHERE destinacija_id = ? ORDER BY redosled, id", $id);
+$ski_pas_cene   = fetchByDest($pdo, "SELECT kategorija, cena_1dan AS dan1, cena_2dana AS dan2, cena_3dana AS dan3, cena_5dana AS dan5, cena_6dana AS dan6, cena_7dana AS dan7 FROM ski_pas_cene WHERE destinacija_id = ? ORDER BY redosled, id", $id);
 $transport      = fetchByDest($pdo, "SELECT * FROM transport_opcije WHERE destinacija_id = ? ORDER BY redosled, id", $id);
 $oprema_paketi  = fetchByDest($pdo, "SELECT * FROM oprema_paketi WHERE destinacija_id = ? ORDER BY redosled, id", $id);
 $skola_paketi   = fetchByDest($pdo, "SELECT * FROM skola_paketi WHERE destinacija_id = ? ORDER BY redosled, id", $id);
@@ -152,9 +152,40 @@ include 'partials/head.php';
             <h1 class="hero-title"><?php echo htmlspecialchars($dest['naziv']); ?></h1>
             <p class="hero-desc"><?php echo htmlspecialchars($dest['opis'] ?? ''); ?></p>
 
+            <!-- Brze statistike: temp, sneg, otvorene staze, distanca -->
+            <div class="hero-quick-stats">
+                <?php if ($vreme): ?>
+                <div class="qs-item">
+                    <span class="qs-label">Trenutno</span>
+                    <strong class="qs-val"><?php echo (int)$vreme['temp_c']; ?>°C</strong>
+                    <small class="qs-sub"><?php echo htmlspecialchars($vreme['uslovi']); ?></small>
+                </div>
+                <div class="qs-item">
+                    <span class="qs-label">Sneg na vrhu</span>
+                    <strong class="qs-val"><?php echo (int)$vreme['sneg_vrh_cm']; ?> <em>cm</em></strong>
+                    <small class="qs-sub">dno <?php echo (int)$vreme['sneg_dno_cm']; ?> cm</small>
+                </div>
+                <?php endif; ?>
+                <?php if ($staze_status):
+                    $ot_total = (int)$staze_status['plave_otvorene'] + (int)$staze_status['crvene_otvorene'] + (int)$staze_status['crne_otvorene'];
+                    $uk_total = (int)$staze_status['plave_ukupno']   + (int)$staze_status['crvene_ukupno']   + (int)$staze_status['crne_ukupno'];
+                ?>
+                <div class="qs-item">
+                    <span class="qs-label">Otvorene staze</span>
+                    <strong class="qs-val"><?php echo $ot_total; ?>/<?php echo $uk_total; ?></strong>
+                    <small class="qs-sub">žičara <?php echo (int)$staze_status['zicara_aktivnih']; ?>/<?php echo (int)$staze_status['zicara_ukupno']; ?></small>
+                </div>
+                <?php endif; ?>
+                <div class="qs-item">
+                    <span class="qs-label">Od Beograda</span>
+                    <strong class="qs-val"><?php echo (int)$dest['distanca_od_bg_km']; ?> <em>km</em></strong>
+                    <small class="qs-sub"><?php echo (int)$dest['ukupno_staza_km']; ?> km staza ukupno</small>
+                </div>
+            </div>
+
+            <!-- Staze po boji — interaktivni hover sa SVG putanjama -->
             <div class="interactive-list">
                 <?php
-                /* Iz `ski_info` polja: plave_staze_km / crvene_staze_km / crne_staze_km */
                 $hero_lista = [
                     'plava'  => ['label' => 'Plave staze',  'km' => $dest['plave_staze_km']  ?? 0],
                     'crvena' => ['label' => 'Crvene staze', 'km' => $dest['crvene_staze_km'] ?? 0],
@@ -170,6 +201,13 @@ include 'partials/head.php';
                 </div>
                 <?php endforeach; ?>
             </div>
+
+            <a href="#rcalc" class="hero-cta-calc">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="1" x2="7" y2="13"/><polyline points="3,9 7,13 11,9"/>
+                </svg>
+                Izračunaj cenu putovanja
+            </a>
         </div>
     </section>
 
@@ -346,104 +384,44 @@ include 'partials/head.php';
             </div>
             <?php endif; ?>
 
-            <!-- IV. LOGISTIKA KALKULATOR -->
-            <div class="reveal logistika-panel" id="logistika">
-                <div>
-                    <span class="section-eyebrow">Sopstveni prevoz</span>
-                    <h2 class="section-title section-title-sm">Kalkulator <span>Logistike</span></h2>
-                    <p class="logistika-intro">
-                        Unesite parametre vašeg vozila za proračun troškova<br>povratnog puta iz Beograda.
-                    </p>
-                    <div class="input-group">
-                        <label for="in-putnici">Broj putnika</label>
-                        <input type="number" id="in-putnici" value="4" min="1" max="9">
-                    </div>
-                    <div class="input-group">
-                        <label for="in-potrosnja">Potrošnja goriva (L/100km)</label>
-                        <input type="number" id="in-potrosnja" value="7.0" step="0.1">
-                    </div>
-                    <div class="input-group">
-                        <label for="in-cena-goriva">Cena goriva (€/L)</label>
-                        <input type="number" id="in-cena-goriva" value="1.65" step="0.05">
-                    </div>
-                    <button class="btn-calc" id="btn-trosak">Izračunaj trošak</button>
-                </div>
+            <!-- IV. RICH KALKULATOR (zaključana destinacija) -->
+            <?php $calc_lock_dest_id = $id; include 'partials/calculator.php'; ?>
 
-                <div>
-                    <div class="stat-item">
-                        <p>Udaljenost od Beograda</p>
-                        <strong><?php echo (int)$dest['distanca_od_bg_km']; ?> km</strong>
-                    </div>
-                    <div class="stat-item">
-                        <p>Prosečna putarina (tur-retur)</p>
-                        <strong>€<?php echo number_format((float)$dest['prosecna_putarina_eur'] * 2, 0); ?></strong>
-                    </div>
-                    <div class="stat-item">
-                        <p>Ukupna distanca (povratak)</p>
-                        <strong><?php echo (int)$dest['distanca_od_bg_km'] * 2; ?> km</strong>
-                    </div>
-                    <div class="result-box logistika-result">
-                        <p>Cena povratnog puta po osobi:</p>
-                        <strong id="rezultat-cena">€--.--</strong>
-                        <p id="rezultat-gorivo" class="rezultat-gorivo"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- V. SKI PAS — cenovnik + kalkulator -->
+            <!-- V. SKI PAS — transparentni cenovnik -->
             <?php if (!empty($ski_pas_cene)): ?>
             <div class="reveal section-block section-block-top" id="ski-pas">
                 <span class="section-eyebrow">Transparentne cene</span>
                 <h2 class="section-title">Cene <span>Ski Pasa</span></h2>
+                <p class="pas-intro">Cene po kategoriji i trajanju. Ukupan iznos za vašu grupu pogledajte u kalkulatoru iznad.</p>
                 <div class="section-divider"></div>
 
-                <div class="ski-pas-layout">
-                    <div class="pas-table-wrap reveal">
-                        <table class="pas-table">
-                            <thead><tr><th>Kategorija</th><th>1 dan</th><th class="best">3 dana</th><th>6 dana</th></tr></thead>
-                            <tbody>
-                                <?php foreach ($ski_pas_cene as $red): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($red['kategorija']); ?></td>
-                                    <td>€<?php echo (int)$red['dan1']; ?></td>
-                                    <td class="best-col">€<?php echo (int)$red['dan3']; ?></td>
-                                    <td>€<?php echo (int)$red['dan6']; ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="pas-calc reveal">
-                        <h3 class="pas-calc-title">Izračunaj <span>ukupno</span></h3>
-                        <p class="pas-control-label">Kategorija</p>
-                        <div class="segment-control" id="kategorijaControl">
-                            <?php foreach ($ski_pas_cene as $i => $red): ?>
-                            <button class="segment-btn<?php echo $i === 0 ? ' active' : ''; ?>"
-                                    data-kategorija="<?php echo htmlspecialchars($red['kategorija']); ?>"
-                                    data-dan1="<?php echo (int)$red['dan1']; ?>"
-                                    data-dan3="<?php echo (int)$red['dan3']; ?>"
-                                    data-dan6="<?php echo (int)$red['dan6']; ?>">
-                                <?php echo htmlspecialchars($red['kategorija']); ?>
-                            </button>
+                <div class="pas-table-wrap reveal">
+                    <table class="pas-table">
+                        <thead>
+                            <tr>
+                                <th>Kategorija</th>
+                                <th>1 dan</th>
+                                <th>2 dana</th>
+                                <th>3 dana</th>
+                                <th>5 dana</th>
+                                <th class="best">6 dana</th>
+                                <th>7 dana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($ski_pas_cene as $red): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($red['kategorija']); ?></td>
+                                <td>€<?php echo (int)$red['dan1']; ?></td>
+                                <td>€<?php echo (int)$red['dan2']; ?></td>
+                                <td>€<?php echo (int)$red['dan3']; ?></td>
+                                <td>€<?php echo (int)$red['dan5']; ?></td>
+                                <td class="best-col">€<?php echo (int)$red['dan6']; ?></td>
+                                <td>€<?php echo (int)$red['dan7']; ?></td>
+                            </tr>
                             <?php endforeach; ?>
-                        </div>
-                        <p class="pas-control-label">Broj dana</p>
-                        <div class="days-selector" id="daysControl">
-                            <button class="day-btn active" data-dani="1">1 dan</button>
-                            <button class="day-btn"        data-dani="3">3 dana</button>
-                            <button class="day-btn"        data-dani="6">6 dana</button>
-                        </div>
-                        <div class="input-group pas-osobe-group">
-                            <label for="pas-osobe">Broj osoba</label>
-                            <input type="number" id="pas-osobe" value="1" min="1" max="20">
-                        </div>
-                        <div class="pas-result-box">
-                            <span class="pas-result-label">Ukupno za ski pas</span>
-                            <div class="pas-result-price" id="pasRezultat">€<?php echo (int)$ski_pas_cene[0]['dan1']; ?></div>
-                            <p class="pas-result-sub" id="pasSub">1 <?php echo htmlspecialchars(strtolower($ski_pas_cene[0]['kategorija'])); ?> · 1 dan</p>
-                        </div>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <?php endif; ?>
@@ -629,67 +607,6 @@ const revealObs = new IntersectionObserver(entries => {
     });
 }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
 document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
-
-/* ---- Logistika kalkulator ---- */
-const DISTANCA = <?php echo (int)$dest['distanca_od_bg_km']; ?>;
-const PUTARINA = <?php echo (float)$dest['prosecna_putarina_eur']; ?>;
-function izracunajTrosak() {
-    const putnici    = Math.max(1, parseInt(document.getElementById('in-putnici').value, 10) || 1);
-    const potrosnja  = parseFloat(document.getElementById('in-potrosnja').value) || 7.0;
-    const cenaGoriva = parseFloat(document.getElementById('in-cena-goriva').value) || 1.65;
-    const gorivo     = (DISTANCA * 2 / 100) * potrosnja * cenaGoriva;
-    const putarinaOba= PUTARINA * 2;
-    const poOsobi    = (gorivo + putarinaOba) / putnici;
-    const el = document.getElementById('rezultat-cena');
-    el.classList.add('updating');
-    setTimeout(() => { el.textContent = '€' + poOsobi.toFixed(2); el.classList.remove('updating'); }, 220);
-    const sub = document.getElementById('rezultat-gorivo');
-    sub.textContent = `Gorivo: €${gorivo.toFixed(2)} · Putarina: €${putarinaOba.toFixed(2)}`;
-    sub.classList.add('visible');
-}
-document.getElementById('btn-trosak').addEventListener('click', izracunajTrosak);
-
-/* ---- Ski pas kalkulator ---- */
-<?php if (!empty($ski_pas_cene)): ?>
-let pasKategorija = {
-    naziv: '<?php echo htmlspecialchars($ski_pas_cene[0]['kategorija']); ?>',
-    dan1:  <?php echo (int)$ski_pas_cene[0]['dan1']; ?>,
-    dan3:  <?php echo (int)$ski_pas_cene[0]['dan3']; ?>,
-    dan6:  <?php echo (int)$ski_pas_cene[0]['dan6']; ?>,
-};
-let pasDani = 1;
-document.querySelectorAll('#kategorijaControl .segment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('#kategorijaControl .segment-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        pasKategorija = {
-            naziv: btn.dataset.kategorija,
-            dan1: parseInt(btn.dataset.dan1, 10),
-            dan3: parseInt(btn.dataset.dan3, 10),
-            dan6: parseInt(btn.dataset.dan6, 10),
-        };
-        izracunajPas();
-    });
-});
-document.querySelectorAll('#daysControl .day-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('#daysControl .day-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        pasDani = parseInt(btn.dataset.dani, 10);
-        izracunajPas();
-    });
-});
-document.getElementById('pas-osobe').addEventListener('input', izracunajPas);
-function izracunajPas() {
-    const osobe = Math.max(1, parseInt(document.getElementById('pas-osobe').value, 10) || 1);
-    const cena  = pasDani === 1 ? pasKategorija.dan1 : pasDani === 3 ? pasKategorija.dan3 : pasKategorija.dan6;
-    const el = document.getElementById('pasRezultat');
-    el.classList.add('updating');
-    setTimeout(() => { el.textContent = '€' + (cena * osobe); el.classList.remove('updating'); }, 220);
-    const daniLabel = pasDani === 1 ? '1 dan' : pasDani + ' dana';
-    document.getElementById('pasSub').textContent = `${osobe} × ${pasKategorija.naziv.toLowerCase()} · ${daniLabel}`;
-}
-<?php endif; ?>
 
 /* ---- FAQ accordion ---- */
 document.querySelectorAll('.faq-question').forEach(btn => {
