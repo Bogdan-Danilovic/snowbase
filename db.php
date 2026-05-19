@@ -5,7 +5,7 @@
  */
 
 $host = 'localhost';
-$db   = 'peak_palm';
+$db   = 'snowbase';
 $user = 'root';
 $pass = ''; // default XAMPP lozinka je prazna
 $charset = 'utf8mb4';
