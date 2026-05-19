@@ -240,7 +240,6 @@ include 'partials/head.php';
         <p class="catalog-intro">
             Od Kopaonika do Zermatt-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
         </p>
-        <div class="section-divider"></div>
     </div>
 
     <div class="dest-grid">
