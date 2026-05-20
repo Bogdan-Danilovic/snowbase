@@ -1,22 +1,13 @@
 -- ============================================================================
--- Snowbase — Premium Alpine Travel Catalog
--- Kompletna schema + seed za 8 ski destinacija.
--- Pokreni u phpMyAdmin nad bazom `peak_palm`.
---
--- IZMENE u odnosu na prethodnu verziju:
---  * Dodate kolone cena_2dana, cena_5dana, cena_7dana u ski_pas_cene
---  * Dodata kolona tip_smestaja ENUM u smestaj
---  * Dodata kolona slug u destinacije (koristi se za putanju slika)
---  * Putanje slika prebacene na konvenciju Slike/{slug}/{tip}.jpg
---  * Realnije cene za sezonu 2025/2026
+-- Snowbase — SCHEMA
+-- Kreira sve tabele. Pokrenuti samo pri prvoj instalaciji ili kad se menjaju
+-- tabele. Brise sve podatke ukljucujuci rucno nacrtane staze!
+-- Posle ovoga pokreni `seed.sql` za pocetne podatke.
 -- ============================================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ----------------------------------------------------------------------------
--- DROP all (clean slate)
--- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `recenzije`;
 DROP TABLE IF EXISTS `faq`;
 DROP TABLE IF EXISTS `ticker_items`;
@@ -34,9 +25,7 @@ DROP TABLE IF EXISTS `ski_info`;
 DROP TABLE IF EXISTS `destinacije`;
 DROP TABLE IF EXISTS `granicni_prelazi`;
 
--- ----------------------------------------------------------------------------
--- 1) GRANICNI PRELAZI
--- ----------------------------------------------------------------------------
+-- GRANICNI PRELAZI
 CREATE TABLE `granicni_prelazi` (
     `id`                  INT AUTO_INCREMENT PRIMARY KEY,
     `naziv`               VARCHAR(80) NOT NULL,
@@ -45,9 +34,7 @@ CREATE TABLE `granicni_prelazi` (
     `tipicno_cekanje_min` SMALLINT    NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 2) DESTINACIJE
--- ----------------------------------------------------------------------------
+-- DESTINACIJE
 CREATE TABLE `destinacije` (
     `id`                    INT AUTO_INCREMENT PRIMARY KEY,
     `slug`                  VARCHAR(60)  NOT NULL UNIQUE,
@@ -64,9 +51,7 @@ CREATE TABLE `destinacije` (
         REFERENCES `granicni_prelazi`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 3) SKI INFO (1:1)
--- ----------------------------------------------------------------------------
+-- SKI INFO
 CREATE TABLE `ski_info` (
     `destinacija_id`    INT NOT NULL PRIMARY KEY,
     `ukupno_staza_km`   DECIMAL(6,1) NOT NULL DEFAULT 0,
@@ -78,9 +63,7 @@ CREATE TABLE `ski_info` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 4) SMESTAJ (1:N) — dodat tip_smestaja
--- ----------------------------------------------------------------------------
+-- SMESTAJ
 CREATE TABLE `smestaj` (
     `id`                INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`    INT NOT NULL,
@@ -96,9 +79,7 @@ CREATE TABLE `smestaj` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 5) VREME TRENUTNO (1:1) i VREME PROGNOZA (1:N)
--- ----------------------------------------------------------------------------
+-- VREME
 CREATE TABLE `vreme_trenutno` (
     `destinacija_id`  INT NOT NULL PRIMARY KEY,
     `temp_c`          TINYINT      NOT NULL DEFAULT 0,
@@ -124,9 +105,7 @@ CREATE TABLE `vreme_prognoza` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 6) STAZE STATUS (live)
--- ----------------------------------------------------------------------------
+-- STAZE STATUS
 CREATE TABLE `staze_status` (
     `destinacija_id`     INT NOT NULL PRIMARY KEY,
     `plave_otvorene`     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
@@ -141,9 +120,7 @@ CREATE TABLE `staze_status` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 7) SKI PAS CENE — sad sa 1/2/3/5/6/7 dana
--- ----------------------------------------------------------------------------
+-- SKI PAS CENE
 CREATE TABLE `ski_pas_cene` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
@@ -160,9 +137,7 @@ CREATE TABLE `ski_pas_cene` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 8) DESTINACIJE SLIKE
--- ----------------------------------------------------------------------------
+-- DESTINACIJE SLIKE
 CREATE TABLE `destinacije_slike` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
@@ -175,9 +150,7 @@ CREATE TABLE `destinacije_slike` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 9) STAZE PUTANJE (SVG)
--- ----------------------------------------------------------------------------
+-- STAZE PUTANJE (SVG) — popunjava se kroz admin/crtanje-staza.php
 CREATE TABLE `staze_putanje` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
@@ -191,9 +164,7 @@ CREATE TABLE `staze_putanje` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 10) TRANSPORT OPCIJE — JSON stavke + cena_po_osobi za kalkulator
--- ----------------------------------------------------------------------------
+-- TRANSPORT OPCIJE
 CREATE TABLE `transport_opcije` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
@@ -208,9 +179,7 @@ CREATE TABLE `transport_opcije` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 11) OPREMA PAKETI
--- ----------------------------------------------------------------------------
+-- OPREMA PAKETI
 CREATE TABLE `oprema_paketi` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
@@ -227,9 +196,7 @@ CREATE TABLE `oprema_paketi` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 12) SKOLA PAKETI
--- ----------------------------------------------------------------------------
+-- SKOLA PAKETI
 CREATE TABLE `skola_paketi` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT NOT NULL,
@@ -243,9 +210,7 @@ CREATE TABLE `skola_paketi` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 13) RECENZIJE
--- ----------------------------------------------------------------------------
+-- RECENZIJE
 CREATE TABLE `recenzije` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
     `destinacija_id`  INT DEFAULT NULL,
@@ -264,24 +229,7 @@ CREATE TABLE `recenzije` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 14) FAQ
--- ----------------------------------------------------------------------------
-CREATE TABLE `faq` (
-    `id`              INT AUTO_INCREMENT PRIMARY KEY,
-    `destinacija_id`  INT          DEFAULT NULL,
-    `pitanje`         VARCHAR(255) NOT NULL,
-    `odgovor`         TEXT         NOT NULL,
-    `redosled`        SMALLINT     NOT NULL DEFAULT 0,
-    `aktivan`         TINYINT(1)   NOT NULL DEFAULT 1,
-    KEY `idx_dest_redosled` (`destinacija_id`, `redosled`),
-    CONSTRAINT `fk_faq_dest` FOREIGN KEY (`destinacija_id`)
-        REFERENCES `destinacije`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ----------------------------------------------------------------------------
--- 15) TICKER ITEMS
--- ----------------------------------------------------------------------------
+-- TICKER ITEMS
 CREATE TABLE `ticker_items` (
     `id`         INT AUTO_INCREMENT PRIMARY KEY,
     `tekst`      VARCHAR(255) NOT NULL,
@@ -290,401 +238,3 @@ CREATE TABLE `ticker_items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
-
--- ============================================================================
--- SEED PODACI
--- ============================================================================
-
--- Granicni prelazi
-INSERT INTO `granicni_prelazi` (`id`, `naziv`, `u_drzavu`, `tipicno_cekanje_min`) VALUES
-(1, 'Horgoš',     'Mađarska',      30),
-(2, 'Batrovci',   'Hrvatska',      25),
-(3, 'Šid',        'Hrvatska',      15),
-(4, 'Vrška Čuka', 'Bugarska',      20),
-(5, 'Gradina',    'Bugarska',      20),
-(6, 'Preševo',    'S. Makedonija', 15),
-(7, '—',          'Srbija',         0);
-
--- ============================================================================
--- DESTINACIJE (8 ski centara)
--- ============================================================================
-INSERT INTO `destinacije` (`id`, `slug`, `naziv`, `opis`, `zemlja`, `region`, `lat`, `lng`, `distanca_od_bg_km`, `prosecna_putarina_eur`, `granicni_prelaz_id`) VALUES
-(1, 'les-orres', 'Les Orres',
-   'Skrivena perla Francuskih Alpa — staze pod stalnim suncem, kompaktno selo i savršena dnevna preglednost. Idealno za porodice i one koji traže privatnost daleko od gužve.',
-   'Francuska', 'Francuske Alpe', 44.4553, 6.5372, 1580, 110.00, 1),
-(2, 'chamonix', 'Chamonix-Mont-Blanc',
-   'Legendarno utočište alpinista. U podnožju najvišeg evropskog vrha, sa 4 odvojena ski područja i autentičnom francuskom čaršijom. Mecca za napredne skijaše.',
-   'Francuska', 'Francuske Alpe', 45.9237, 6.8694, 1530, 115.00, 1),
-(3, 'val-thorens', 'Val Thorens',
-   'Najviše skijalište Evrope na 2300m — Les 3 Vallées, 600 km povezanih staza, garantovani sneg do maja. Pravi raj za pisteur-e koji ne posustaju.',
-   'Francuska', 'Francuske Alpe', 45.2980, 6.5800, 1620, 120.00, 1),
-(4, 'zermatt', 'Zermatt',
-   'Pod Matterhornom — stakleno selo bez automobila, pet hiljada metara nadmorske visine i ski pas povezan sa Cervinia-om u Italiji. Definicija švajcarske elegancije.',
-   'Švajcarska', 'Valais', 46.0207, 7.7491, 1350, 95.00, 1),
-(5, 'cortina', 'Cortina d''Ampezzo',
-   'Kraljica Dolomita — domaćin Olimpijade 2026. Bleda krečnjačka zubaca, žute fasade i 1200 km povezanih staza u Dolomiti Superski sistemu.',
-   'Italija', 'Dolomiti', 46.5396, 12.1357, 1190, 75.00, 1),
-(6, 'st-anton', 'St. Anton am Arlberg',
-   'Kolevka alpskog skijanja — gde je rođen moderni skijaški sport 1901. Apres-ski legenda, Schindlerov Kar, 305 km povezanih staza Arlberg sistema.',
-   'Austrija', 'Tirol', 46.7497, 10.2702, 1025, 65.00, 1),
-(7, 'kopaonik', 'Kopaonik',
-   'Krov Srbije — najveći domaći ski centar, 60 km staza, 25 žičara. Komforna alternativa Alpima bez graničnih prelaza, sa srpskom hranom i razumnim cenama.',
-   'Srbija', 'Centralna Srbija', 43.2860, 20.8164, 280, 0.00, 7),
-(8, 'bansko', 'Bansko',
-   'Najpristupačnije pravo skijalište regiona — 75 km staza, gondola direktno iz centra grada, balkanska gostoljubivost i cene 30% niže od Alpa.',
-   'Bugarska', 'Pirin', 41.8378, 23.4884, 530, 18.00, 5);
-
--- ============================================================================
--- SKI INFO
--- ============================================================================
-INSERT INTO `ski_info` (`destinacija_id`, `ukupno_staza_km`, `plave_staze_km`, `crvene_staze_km`, `crne_staze_km`, `broj_zicara`) VALUES
-(1, 100, 35, 50, 15, 17),
-(2, 170, 50, 90, 30, 49),
-(3, 600, 250, 280, 70, 31),
-(4, 360, 110, 195, 55, 53),
-(5, 140, 60, 65, 15, 34),
-(6, 305, 130, 145, 30, 87),
-(7, 60,  29, 21,  10, 25),
-(8, 75,  35, 30,  10, 14);
-
--- ============================================================================
--- SMESTAJ (2-3 objekta po destinaciji, tip + slika putanja)
--- ============================================================================
-INSERT INTO `smestaj` (`destinacija_id`, `naziv`, `tip_smestaja`, `zvezdice`, `kapacitet_osoba`, `cena_po_noci_eur`, `slika_url`, `redosled`) VALUES
--- Les Orres
-(1, 'Hôtel Le Mélèze',          'hotel',    4, 2,  98, 'Slike/les-orres/h1.jpg', 10),
-(1, 'Résidence Les Crêtes',     'apartman', 3, 4,  72, 'Slike/les-orres/h2.jpg', 20),
-(1, 'Chalet du Sommet',         'chalet',   5, 6, 185, 'Slike/les-orres/h3.jpg', 30),
--- Chamonix
-(2, 'Hôtel Mont-Blanc',         'hotel',    5, 2, 245, 'Slike/chamonix/h1.jpg', 10),
-(2, 'Auberge du Bois Prin',     'hotel',    4, 2, 145, 'Slike/chamonix/h2.jpg', 20),
-(2, 'Chamonix Lodge',           'pansion',  3, 4,  88, 'Slike/chamonix/h3.jpg', 30),
--- Val Thorens
-(3, 'Altapura Hotel',           'hotel',    5, 2, 325, 'Slike/val-thorens/h1.jpg', 10),
-(3, 'Résidence Le Cheval Blanc','apartman', 4, 4, 160, 'Slike/val-thorens/h2.jpg', 20),
--- Zermatt
-(4, 'Hotel Zermatterhof',       'hotel',    5, 2, 385, 'Slike/zermatt/h1.jpg', 10),
-(4, 'The Omnia Mountain Lodge', 'chalet',   5, 2, 425, 'Slike/zermatt/h2.jpg', 20),
-(4, 'Hotel Bahnhof',            'hotel',    3, 4,  95, 'Slike/zermatt/h3.jpg', 30),
--- Cortina
-(5, 'Cristallo Hotel Spa',      'hotel',    5, 2, 290, 'Slike/cortina/h1.jpg', 10),
-(5, 'Hotel de la Poste',        'hotel',    4, 2, 170, 'Slike/cortina/h2.jpg', 20),
-(5, 'Camina Suite Spa',         'apartman', 4, 4, 148, 'Slike/cortina/h3.jpg', 30),
--- St. Anton
-(6, 'Hotel Schwarzer Adler',    'hotel',    4, 2, 185, 'Slike/st-anton/h1.jpg', 10),
-(6, 'Hotel Karl Schranz',       'hotel',    4, 2, 168, 'Slike/st-anton/h2.jpg', 20),
-(6, 'Pension Daniela',          'pansion',  3, 3,  78, 'Slike/st-anton/h3.jpg', 30),
--- Kopaonik
-(7, 'Grand Hotel & Spa',        'hotel',    4, 2,  98, 'Slike/kopaonik/h1.jpg', 10),
-(7, 'MK Mountain Resort',       'hotel',    4, 2,  88, 'Slike/kopaonik/h2.jpg', 20),
-(7, 'Apartmani Konaci',         'apartman', 3, 4,  56, 'Slike/kopaonik/h3.jpg', 30),
--- Bansko
-(8, 'Kempinski Grand Arena',    'hotel',    5, 2, 148, 'Slike/bansko/h1.jpg', 10),
-(8, 'Lucky Bansko Aparthotel',  'apartman', 4, 4,  74, 'Slike/bansko/h2.jpg', 20),
-(8, 'Hotel Strazhite',          'hotel',    3, 2,  50, 'Slike/bansko/h3.jpg', 30);
-
--- ============================================================================
--- VREME TRENUTNO
--- ============================================================================
-INSERT INTO `vreme_trenutno` (`destinacija_id`, `temp_c`, `temp_osecaj_c`, `sneg_dno_cm`, `sneg_vrh_cm`, `uslovi`, `vidljivost`) VALUES
-(1,  -3,  -8,  45, 185, 'Sunčano',           'Odlična (>10 km)'),
-(2,  -6, -12,  85, 240, 'Pretežno sunčano',  'Odlična (>10 km)'),
-(3,  -9, -15, 120, 310, 'Sneg',              'Slaba (1-3 km)'),
-(4,  -7, -13,  95, 280, 'Sunčano',           'Odlična (>10 km)'),
-(5,  -2,  -6,  60, 165, 'Oblačno',           'Dobra (5-10 km)'),
-(6,  -4,  -9,  70, 195, 'Pretežno oblačno',  'Dobra (5-10 km)'),
-(7,  -1,  -5,  35, 110, 'Sunčano',           'Odlična (>10 km)'),
-(8,  -3,  -7,  50, 140, 'Sunčano',           'Odlična (>10 km)');
-
--- ============================================================================
--- VREME PROGNOZA
--- ============================================================================
-INSERT INTO `vreme_prognoza` (`destinacija_id`, `dan_skraceno`, `temp_min`, `temp_max`, `stanje`, `redosled`) VALUES
-(1, 'PON', -8,  -4, 'Oblačno', 1), (1, 'UTO', -12, -7, 'Sneg', 2), (1, 'SRE', -5,  -1, 'Sunčano', 3),
-(2, 'PON',-10,  -6, 'Sneg',    1), (2, 'UTO', -8,  -5, 'Oblačno', 2), (2, 'SRE', -6,  -3, 'Sunčano', 3),
-(3, 'PON',-15, -10, 'Sneg',    1), (3, 'UTO',-12,  -8, 'Sneg',    2), (3, 'SRE',-10,  -5, 'Oblačno', 3),
-(4, 'PON',-11,  -7, 'Sunčano', 1), (4, 'UTO', -9,  -5, 'Sunčano', 2), (4, 'SRE', -7,  -3, 'Pretežno sunčano', 3),
-(5, 'PON', -6,  -2, 'Oblačno', 1), (5, 'UTO', -4,  -1, 'Sunčano', 2), (5, 'SRE', -3,   1, 'Sunčano', 3),
-(6, 'PON', -8,  -4, 'Sneg',    1), (6, 'UTO', -6,  -3, 'Oblačno', 2), (6, 'SRE', -5,  -1, 'Pretežno sunčano', 3),
-(7, 'PON', -5,  -1, 'Sunčano', 1), (7, 'UTO', -3,   1, 'Pretežno sunčano', 2), (7, 'SRE', -2,   2, 'Sunčano', 3),
-(8, 'PON', -7,  -3, 'Sunčano', 1), (8, 'UTO', -5,  -2, 'Pretežno sunčano', 2), (8, 'SRE', -4,  -1, 'Oblačno', 3);
-
--- ============================================================================
--- STAZE STATUS
--- ============================================================================
-INSERT INTO `staze_status` (`destinacija_id`, `plave_otvorene`, `plave_ukupno`, `crvene_otvorene`, `crvene_ukupno`, `crne_otvorene`, `crne_ukupno`, `zicara_aktivnih`, `zicara_ukupno`) VALUES
-(1, 12, 15,  8, 10,  2,  4, 14, 17),
-(2, 18, 22, 24, 30,  9, 12, 42, 49),
-(3, 32, 38, 35, 42, 11, 14, 28, 31),
-(4, 16, 20, 26, 32, 12, 15, 48, 53),
-(5, 14, 18, 14, 18,  3,  6, 28, 34),
-(6, 20, 24, 22, 28,  6,  9, 75, 87),
-(7, 10, 13,  6,  9,  2,  3, 22, 25),
-(8, 12, 15,  8, 11,  3,  4, 12, 14);
-
--- ============================================================================
--- SKI PAS CENE — realne cene za 2025/2026 sezonu
--- 1d / 2d / 3d / 5d / 6d / 7d
--- ============================================================================
-INSERT INTO `ski_pas_cene` (`destinacija_id`, `kategorija`, `cena_1dan`, `cena_2dana`, `cena_3dana`, `cena_5dana`, `cena_6dana`, `cena_7dana`, `redosled`) VALUES
--- Les Orres (Francuska)
-(1,'Odrasli',  44,  82, 118, 175, 198, 222, 10),
-(1,'Studenti', 37,  68, 100, 148, 168, 188, 20),
-(1,'Deca',     26,  48,  72, 105, 118, 132, 30),
-(1,'Senior',   34,  64,  92, 138, 156, 175, 40),
--- Chamonix Mont-Blanc (premium)
-(2,'Odrasli',  68, 128, 184, 270, 312, 340, 10),
-(2,'Studenti', 58, 108, 156, 230, 266, 290, 20),
-(2,'Deca',     40,  74, 112, 165, 190, 210, 30),
-(2,'Senior',   58, 108, 156, 230, 266, 290, 40),
--- Val Thorens (3 Vallées — najveće)
-(3,'Odrasli',  72, 138, 198, 295, 348, 378, 10),
-(3,'Studenti', 60, 116, 168, 250, 296, 322, 20),
-(3,'Deca',     42,  80, 118, 175, 208, 226, 30),
-(3,'Senior',   64, 122, 175, 262, 310, 336, 40),
--- Zermatt (Švajcarska — najskuplje)
-(4,'Odrasli',  84, 160, 232, 348, 412, 448, 10),
-(4,'Studenti', 71, 136, 196, 296, 350, 380, 20),
-(4,'Deca',     42,  80, 116, 174, 206, 224, 30),
-(4,'Senior',   76, 144, 210, 314, 372, 404, 40),
--- Cortina d'Ampezzo (Dolomiti)
-(5,'Odrasli',  64, 122, 168, 232, 268, 290, 10),
-(5,'Studenti', 56, 108, 148, 208, 240, 260, 20),
-(5,'Deca',     45,  86, 120, 168, 192, 210, 30),
-(5,'Senior',   56, 108, 148, 208, 240, 260, 40),
--- St. Anton (Arlberg)
-(6,'Odrasli',  67, 128, 186, 274, 318, 345, 10),
-(6,'Studenti', 60, 114, 168, 248, 286, 310, 20),
-(6,'Deca',     34,  64,  94, 138, 160, 174, 30),
-(6,'Senior',   60, 114, 168, 248, 286, 310, 40),
--- Kopaonik (domaće — najpovoljnije Alpa-like)
-(7,'Odrasli',  40,  74, 106, 158, 185, 205, 10),
-(7,'Studenti', 33,  62,  90, 134, 158, 175, 20),
-(7,'Deca',     23,  44,  62,  94, 110, 122, 30),
-(7,'Senior',   31,  58,  84, 124, 148, 164, 40),
--- Bansko
-(8,'Odrasli',  45,  84, 122, 178, 208, 228, 10),
-(8,'Studenti', 38,  72, 104, 152, 176, 196, 20),
-(8,'Deca',     25,  47,  68,  98, 116, 128, 30),
-(8,'Senior',   38,  72, 104, 152, 176, 196, 40);
-
--- ============================================================================
--- DESTINACIJE SLIKE — Slike/{slug}/{tip}.jpg konvencija
--- ============================================================================
-INSERT INTO `destinacije_slike` (`destinacija_id`, `tip`, `url`, `alt`, `redosled`) VALUES
--- Les Orres
-(1,'mapa_staza', 'Slike/les-orres/mapa.jpg',  'Mapa staza Les Orres',     1),
-(1,'hero',       'Slike/les-orres/hero.jpg',  'Les Orres panorama',       1),
-(1,'gallery',    'Slike/les-orres/g1.jpg',    'Les Orres staze',          1),
-(1,'gallery',    'Slike/les-orres/g2.jpg',    'Les Orres selo',           2),
--- Chamonix
-(2,'mapa_staza', 'Slike/chamonix/mapa.jpg',   'Mapa staza Chamonix',      1),
-(2,'hero',       'Slike/chamonix/hero.jpg',   'Mont Blanc panorama',      1),
-(2,'gallery',    'Slike/chamonix/g1.jpg',     'Chamonix čaršija',         1),
-(2,'gallery',    'Slike/chamonix/g2.jpg',     'Aiguille du Midi',         2),
--- Val Thorens
-(3,'mapa_staza', 'Slike/val-thorens/mapa.jpg','Mapa staza Val Thorens',   1),
-(3,'hero',       'Slike/val-thorens/hero.jpg','Val Thorens vrh',          1),
-(3,'gallery',    'Slike/val-thorens/g1.jpg',  '3 Vallées panorama',       1),
-(3,'gallery',    'Slike/val-thorens/g2.jpg',  'Cime Caron',                2),
--- Zermatt
-(4,'mapa_staza', 'Slike/zermatt/mapa.jpg',    'Mapa staza Zermatt',       1),
-(4,'hero',       'Slike/zermatt/hero.jpg',    'Matterhorn',                1),
-(4,'gallery',    'Slike/zermatt/g1.jpg',      'Zermatt selo',              1),
-(4,'gallery',    'Slike/zermatt/g2.jpg',      'Klein Matterhorn',          2),
--- Cortina
-(5,'mapa_staza', 'Slike/cortina/mapa.jpg',    'Mapa staza Cortina',        1),
-(5,'hero',       'Slike/cortina/hero.jpg',    'Dolomiti panorama',         1),
-(5,'gallery',    'Slike/cortina/g1.jpg',      'Tofana',                    1),
-(5,'gallery',    'Slike/cortina/g2.jpg',      'Cortina centar',            2),
--- St. Anton
-(6,'mapa_staza', 'Slike/st-anton/mapa.jpg',   'Mapa staza St. Anton',      1),
-(6,'hero',       'Slike/st-anton/hero.jpg',   'St. Anton panorama',        1),
-(6,'gallery',    'Slike/st-anton/g1.jpg',     'Galzig',                    1),
-(6,'gallery',    'Slike/st-anton/g2.jpg',     'Schindler Kar',             2),
--- Kopaonik
-(7,'mapa_staza', 'Slike/kopaonik/mapa.jpg',   'Mapa staza Kopaonik',       1),
-(7,'hero',       'Slike/kopaonik/hero.jpg',   'Kopaonik panorama',         1),
-(7,'gallery',    'Slike/kopaonik/g1.jpg',     'Pančićev vrh',              1),
-(7,'gallery',    'Slike/kopaonik/g2.jpg',     'Sunčana dolina',            2),
--- Bansko
-(8,'mapa_staza', 'Slike/bansko/mapa.jpg',     'Mapa staza Bansko',         1),
-(8,'hero',       'Slike/bansko/hero.jpg',     'Pirin planina',             1),
-(8,'gallery',    'Slike/bansko/g1.jpg',       'Bansko gondola',            1),
-(8,'gallery',    'Slike/bansko/g2.jpg',       'Plato staze',               2);
-
--- ============================================================================
--- STAZE PUTANJE (3 placeholder curves po destinaciji)
--- ============================================================================
-INSERT INTO `staze_putanje` (`destinacija_id`, `tip_klasa`, `naziv`, `svg_d_putanja`, `duzina_km`, `redosled`) VALUES
--- Les Orres
-(1,'plava','La Cascade','M370 102C364.167 104.167 351 110.4 345 118C339 125.6 318.167 126.5 308.5 126C293.5 128 278 134 272 141.5C269.833 143.333 270.3 146 291.5 150C296.5 150.943 298.9 154.3 300.5 157.5C302.333 155.333 305.8 154.4 311 164C322.167 166.667 342.9 173.3 336.5 178.5C328.5 185 335.5 185.5 330.5 190C325.5 194.5 309.5 194 300.5 196M298 211.5C290.5 212.833 275.6 217.2 276 224M171.5 198.5C184 199.5 210.5 202.8 216.5 208C226 209.5 255 210 260 211.5C265 213 273.085 216.585 276 219.5C276.556 221.5 276.329 222 276 224L204 265L233 258L245.5 252L263.5 247.5C267.667 247.5 279.5 246.9 293.5 244.5C311 241.5 308.5 236 313 236C316.6 236 326.167 230.667 330.5 228C369.3 216.8 384 211.5 396.5 211.5V206C390.167 203.667 375.5 197.4 367.5 191C359.5 184.6 352.167 187.667 349.5 190M185.5 229.5C181.5 224.5 175 225.5 171.5 225C168 224.5 159 224 141 216C126.6 209.6 114.333 208 110 208C99.3333 209.5 76.9 213.9 72.5 219.5C67 226.5 103.5 231 103 242C102.318 257 110 251.5 98 270C97.1573 271.299 96.9569 272.683 96.166 274C94.5218 276.738 90.3253 279.19 72.5 280C70.3333 282.5 63.4 287.7 53 288.5C40 289.5 33.5 294.5 30 296M228.5 139.5C250.833 137.833 288.05 140.507 254.5 157.5C232 168 218.5 161 196.5 168C182.5 172.455 154.5 168 151 174.5C156.333 177.167 169.9 183.1 181.5 185.5C196 188.5 196.5 190 176 195C158.5 199.268 181.5 198.662 188 200M98 308C111.5 297 112.5 299 116 299C119.5 299 135.5 292 156 276C172.4 263.2 180.5 263.333 182.5 265M156 276C153.167 276.167 146 274 137.5 268.5C122.5 263.5 106.832 268 96.166 274M362 226L413.5 236C415.5 237.833 417.2 242.1 408 244.5C404.5 247.5 411 249 393.5 250.5C379.5 251.7 362 252 355 252C351.333 251 342.5 250 336.5 254C330.5 258 254.5 254 235.5 256.8M415.5 242C419.089 242.232 424.591 243.685 426.009 247.5M339 293.5C336.167 291.333 331.7 286.6 336.5 285C341.3 283.4 342.167 278.333 342 276H345C359.5 272.5 357.5 270 363.5 265C368.3 261 378.167 261 382.5 261.5C383 262.667 388 265 404 265C424 265 419 265 425 254C426.466 251.312 426.632 249.178 426.009 247.5M426.009 247.5C431.672 244.333 445.2 238 454 238C462.8 238 460.667 246.333 458.5 250.5C458.667 255.333 457.5 265 451.5 265C445.5 265 433.667 262.667 428.5 261.5M486.5 112.5C482.833 115.833 474 123.2 468 126C460.5 129.5 461 133.5 458.5 134C456 134.5 449.5 134.5 444 139.5C439.6 143.5 433.5 145.833 431 146.5L430.5 148.5M216.5 237.5C220.167 239.167 223.892 240.195 211.5 243.5C204 245.5 223.5 249 205.5 252C205 252.333 204.3 253.5 205.5 255.5C207 258 207 258.5 204 259C201 259.5 198 263 198 264M469.5 160H460.5C459.167 161 456.7 163.3 457.5 164.5C458.3 165.7 455.5 165.667 454 165.5', 8.5, 1),
-(1,'crvena','Rouge Mélèzes','M306.5 123.5C295.3 123.9 292.167 118.667 292 116C295.5 110.5 294.5 111 289.5 103.5C297.1 100.7 303.5 97 305.5 90.5C330.3 92.5 330 90.5 330 84C340.5 74.5 341 74.5 333.5 68.5C335.9 60.1 327.833 58 324 58C319.5 58 317.403 63.6563 312 66.5C302.5 71.5 299.5 74 290.5 76C289.5 79 281.6 84.2 276 85C274 86.6667 268 92.5 268.5 101C265.5 104.5 262 104.7 256 107.5', 12.3, 2),
-(1,'crna','Pylône','M 320 80 L 310 180 L 290 290', 4.7, 3),
--- Chamonix
-(2,'plava','La Verte','M 120 100 Q 250 180 380 280', 14.0, 1),
-(2,'crvena','Charamillon','M 180 80 Q 300 140 420 220', 18.5, 2),
-(2,'crna','Vallée Blanche','M 220 60 Q 310 200 400 320', 22.0, 3),
--- Val Thorens
-(3,'plava','Plein Sud','M 100 120 Q 280 180 460 240', 25.5, 1),
-(3,'crvena','Cime Caron','M 140 90 Q 280 200 480 250', 32.0, 2),
-(3,'crna','Combe de Rosaël','M 180 70 Q 310 180 470 290', 18.5, 3),
--- Zermatt
-(4,'plava','Sunnegga','M 160 130 Q 290 200 420 270', 16.0, 1),
-(4,'crvena','Klein Matterhorn','M 200 90 Q 300 200 410 310', 28.5, 2),
-(4,'crna','Tiefbach','M 240 70 Q 330 200 420 290', 12.0, 3),
--- Cortina
-(5,'plava','Pocol','M 140 110 Q 270 200 400 290', 9.5, 1),
-(5,'crvena','Olympia','M 180 90 Q 290 200 420 280', 11.0, 2),
-(5,'crna','Forcella Rossa','M 230 70 Q 320 200 410 310', 5.5, 3),
--- St. Anton
-(6,'plava','Galzig','M 120 120 Q 270 200 420 260', 18.0, 1),
-(6,'crvena','Kapall','M 170 90 Q 290 200 430 280', 22.5, 2),
-(6,'crna','Schindler Kar','M 220 70 Q 310 200 410 320', 7.5, 3),
--- Kopaonik
-(7,'plava','Sunčana dolina','M 160 140 Q 280 200 400 260', 12.0, 1),
-(7,'crvena','Karaman greben','M 200 100 Q 300 200 410 280', 8.5, 2),
-(7,'crna','Pančićev vrh','M 250 80 Q 320 200 400 300', 3.5, 3),
--- Bansko
-(8,'plava','Plato','M 150 130 Q 280 200 410 270', 14.0, 1),
-(8,'crvena','Bunderitsa','M 190 100 Q 300 200 420 280', 12.5, 2),
-(8,'crna','Tomba','M 240 80 Q 320 200 410 300', 4.5, 3);
-
--- ============================================================================
--- TRANSPORT OPCIJE
--- Cene se izračunavaju kroz distancu (auto), realističnu agencijsku cenu (bus)
--- ili paušal (avion + transfer).
--- ============================================================================
--- BUS (agencijski) — približno 55 EUR/100km za povratnu kartu
-INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `cena_po_osobi`, `stavke_json`, `redosled`)
-SELECT id, 'bus', 'Agencijski Autobus', 'Direktna linija iz Beograda',
-    ROUND(distanca_od_bg_km * 0.085, 0),
-    JSON_ARRAY(
-        JSON_OBJECT('label','Polazak',     'vrednost','Sava Centar, 22:00h'),
-        JSON_OBJECT('label','Trajanje',    'vrednost', CONCAT('~', ROUND(distanca_od_bg_km/80), 'h vožnje')),
-        JSON_OBJECT('label','Povratak',    'vrednost','Nedeljom, 14:00h'),
-        JSON_OBJECT('label','Prtljag',     'vrednost','Kofer + ski torba'),
-        JSON_OBJECT('label','Cena karte',  'vrednost', CONCAT(ROUND(distanca_od_bg_km * 0.085, 0), ' EUR / osobi'))
-    ), 10
-FROM `destinacije`;
-
--- AVION + Transfer — paušal po zoni (250 EUR za Alpe, 180 EUR za Bansko/Bugarska, 0 za Kopaonik)
-INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `cena_po_osobi`, `stavke_json`, `redosled`)
-SELECT id, 'avion', 'Avion + Transfer', 'Najbrža opcija',
-    CASE
-        WHEN zemlja = 'Srbija' THEN 0
-        WHEN zemlja = 'Bugarska' THEN 180
-        ELSE 250
-    END,
-    JSON_ARRAY(
-        JSON_OBJECT('label','Aerodrom',          'vrednost', CASE WHEN zemlja='Srbija' THEN 'Nije primenljivo' ELSE 'BEG - Najbliži' END),
-        JSON_OBJECT('label','Let',               'vrednost', CASE WHEN zemlja='Srbija' THEN '—' ELSE '~2h' END),
-        JSON_OBJECT('label','Transfer',          'vrednost','Aerodrom - Hotel'),
-        JSON_OBJECT('label','Trajanje transfera','vrednost','~1.5h'),
-        JSON_OBJECT('label','Paket cena',        'vrednost', CONCAT(
-            CASE WHEN zemlja='Srbija' THEN '—' WHEN zemlja='Bugarska' THEN '180' ELSE '250' END, ' EUR / osobi'))
-    ), 20
-FROM `destinacije`;
-
--- AUTO — cena 0 (računa se kroz kalkulator iz potrošnje + putarine)
-INSERT INTO `transport_opcije` (`destinacija_id`, `tip`, `naziv`, `podnaslov`, `cena_po_osobi`, `stavke_json`, `redosled`)
-SELECT d.id, 'auto', 'Sopstveni Auto', CONCAT(d.distanca_od_bg_km,' km od Beograda'), 0,
-    JSON_ARRAY(
-        JSON_OBJECT('label','Putarina',       'vrednost', CONCAT(d.prosecna_putarina_eur*2, ' EUR povratno')),
-        JSON_OBJECT('label','Zimska oprema',  'vrednost','Obavezna'),
-        JSON_OBJECT('label','Granični prelaz','vrednost', COALESCE(gp.naziv,'—'))
-    ), 30
-FROM `destinacije` d LEFT JOIN `granicni_prelazi` gp ON gp.id = d.granicni_prelaz_id;
-
--- ============================================================================
--- OPREMA PAKETI
--- ============================================================================
-INSERT INTO `oprema_paketi` (`destinacija_id`, `naziv`, `badge`, `opis`, `cena_eur`, `includes_json`, `napomena`, `preporuceno`, `redosled`)
-SELECT id, 'Starter Komplet', 'Ekonomični',
-    'Idealno za početnike i rekreativce. Proverena oprema renomirane klase.',
-    22,
-    JSON_ARRAY('Skije (all-mountain, početni nivo)','Pancerice (toplinski podstavljene)','Štapovi + kaiš za zapešće','Kaciga (EN 1077 certifikat)'),
-    'Min. 2 dana', 0, 10
-FROM `destinacije`;
-
-INSERT INTO `oprema_paketi` (`destinacija_id`, `naziv`, `badge`, `opis`, `cena_eur`, `includes_json`, `napomena`, `preporuceno`, `redosled`)
-SELECT id, 'Expert Performance', 'Premium',
-    'Napredni modeli skija za iskusne skijaše koji traže preciznost i kontrolu na svakom terenu.',
-    38,
-    JSON_ARRAY('Race/Freeride skije','Pancerice (race-fit, carbon vložak)','Štapovi od karbona','Kaciga + zaštitne naočare','Zaštitni šorts i back protektor'),
-    'Preporučujemo', 1, 20
-FROM `destinacije`;
-
--- ============================================================================
--- SKOLA PAKETI
--- ============================================================================
-INSERT INTO `skola_paketi` (`destinacija_id`, `naziv`, `opis`, `cena_eur`, `jedinica`, `redosled`)
-SELECT id, 'Grupni čas (do 6 osoba)', '2h · Svi nivoi · Srpski / Engleski', 18, 'osobi', 10 FROM `destinacije`
-UNION ALL SELECT id, 'Individualni čas',        '2h · Personalizovani program',        65, 'čas',   20 FROM `destinacije`
-UNION ALL SELECT id, '5-dnevni grupni kurs',    '2h dnevno · Sve uzraste · Sertifikat', 72, 'osobi', 30 FROM `destinacije`
-UNION ALL SELECT id, 'Snowboard starter',       '3h · Početnici · Oprema uključena',    48, 'osobi', 40 FROM `destinacije`;
-
--- ============================================================================
--- RECENZIJE — homepage karusel + per-destinacija
--- ============================================================================
-INSERT INTO `recenzije` (`destinacija_id`,`ime`,`avatar`,`lokacija`,`tekst`,`ocena`,`datum_prikaza`,`na_homepage`,`redosled`) VALUES
-(NULL,'Marija T.','MT','Les Orres, Francuska',
- 'Neverovatno iskustvo! Staze su savršeno pripremljene, sneg prašinast celu nedelju. Organizacija Snowbase bila je besprekorna od prvog do poslednjeg dana.',
- 5,'Januar 2026.',1,10),
-(NULL,'Stefan K.','SK','St. Anton, Austrija',
- 'Treće godišnje putovanje. Smeštaj tačno prema opisu, transfer brz, granični prelaz bez čekanja. Jednom kad probate Snowbase, ne idete drugde.',
- 5,'Februar 2026.',1,20),
-(NULL,'Ana & Bojan','AB','Cortina d''Ampezzo, Italija',
- 'Odlično za porodice. Ski škola za početnike strpljiva i profesionalna. Cortina je čarobno selo — preporučujemo svima.',
- 5,'Decembar 2025.',1,30),
-(NULL,'Nikola P.','NP','Zermatt, Švajcarska',
- 'Sve savršeno isplanirano — od polaska iz Beograda do povratka, nula stresa. Kalkulator je bio tačan do poslednjeg evra.',
- 5,'Januar 2026.',1,40);
-
-INSERT INTO `recenzije` (`destinacija_id`,`ime`,`tekst`,`ocena`,`datum_prikaza`,`tagovi`,`redosled`)
-SELECT id,'Marko D.',
-    'Savršeno organizovan put. Staze prelepe, hotel taman koliko nam treba. Ekipa Snowbase brza i profesionalna.',
-    5,'Januar 2026.', JSON_ARRAY('Staze ★★★★★','Organizacija ★★★★★'), 10
-FROM `destinacije`;
-
-INSERT INTO `recenzije` (`destinacija_id`,`ime`,`tekst`,`ocena`,`datum_prikaza`,`tagovi`,`redosled`)
-SELECT id,'Jelena & Vuk',
-    'Treća sezona zaredom. Cena je fer, kvalitet izuzetan. Ski škola savršena za našu decu — preporučujemo svima.',
-    5,'Februar 2026.', JSON_ARRAY('Porodično ★★★★★','Smeštaj ★★★★☆'), 20
-FROM `destinacije`;
-
--- ============================================================================
--- FAQ (globalni)
--- ============================================================================
-INSERT INTO `faq` (`destinacija_id`,`pitanje`,`odgovor`,`redosled`) VALUES
-(NULL,'Da li je ski pas uključen u cenu aranžmana?',
- 'Ski pas nije automatski uključen u smeštajni aranžman — to nam omogućava da svaki paket prilagodimo vašim potrebama. Možete ga dokupiti kroz naš kalkulator na ovoj stranici, ili nas kontaktirati za paket deal (smeštaj + pas) koji je često povoljniji od pojedinačne kupovine.',10),
-(NULL,'Kakvo zdravstveno osiguranje je potrebno za ski destinacije?',
- 'Strogo preporučujemo putno osiguranje koje eksplicitno pokriva "zimske sportove i aktivnosti na snegu". Standardne turističke polise često ne pokrivaju skijaške povrede. Imamo dogovor sa partnerskim osiguravačem koji nudi specijalnu skijašku polisu od samo 8 EUR/dan po osobi.',20),
-(NULL,'Šta se dešava sa ski pasom ako se planina zatvori zbog nevremena?',
- 'Svaki skijaški centar iz našeg kataloga ima jasnu kompenzacionu politiku: za zatvaranje duže od 4 uzastopna sata vrši se proporcionalna nadoknada — ili produžetak pasa bez naknade, ili bon za narednu sezonu. Snowbase aktivno zastupa vaše interese.',30),
-(NULL,'Kako rezervisati ski školu ili rentiranje opreme?',
- 'Rezervacija se vrši minimum 48h pre željenog termina. Popunite kontakt obrazac na kraju stranice ili nas direktno kontaktirajte. Za grupe od 6 i više osoba odobravamo 15% popusta na kompletan paket opreme.',40);
-
--- ============================================================================
--- TICKER ITEMS
--- ============================================================================
-INSERT INTO `ticker_items` (`tekst`,`redosled`) VALUES
-('Les Orres: 185 cm snega na vrhu · Prajder odličan',10),
-('Batrovci (SRB/HRV): Zadržavanje ~25 min',20),
-('Chamonix-Mont-Blanc: Sve žičare u pogonu · Vidljivost odlična',30),
-('Simplon prevoj (CH): Obavezni lanci ili zimske gume',40),
-('Val Thorens: 310 cm snega · Sezona traje do kraja aprila',50),
-('Horgoš (SRB/HUN): Bez zadržavanja',60),
-('Innsbruck / St. Anton: -6°C · Sunčano · Sve staze otvorene',70),
-('Brenner autoput (AT): Zimska oprema obavezna iznad 700 m',80),
-('Cortina d''Ampezzo: 165 cm sveže snežne podloge',90),
-('Šid (SRB/HRV): Zadržavanje ~15 min',100),
-('Sella Ronda (IT): 40 km runde · Perfektni uslovi',110),
-('Zermatt: 280 cm snega na Matterhornskom platou',120),
-('Kopaonik: -1°C · Sunčano · Domaća sezona u punom jeku',130),
-('Bansko: 140 cm snega · Najpristupačnija opcija u regionu',140);
-
--- ============================================================================
--- KRAJ — Snowbase baza spremna
--- ============================================================================

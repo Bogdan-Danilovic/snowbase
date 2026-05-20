@@ -2,7 +2,24 @@
   "permissions": {
     "allow": [
       "Bash(git rm *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(node -e ' *)",
+      "Bash(php -l index.php)",
+      "Bash(php -l partials/footer.php)",
+      "Bash(php -l partials/calculator.php)",
+      "Bash(php -l partials/nav.php)",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\index.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\partials\\\\footer.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\partials\\\\nav.php\")",
+      "Bash(php -l \"style 3.0.css\")",
+      "Bash(php -l \"index.php\")",
+      "Bash(php -l \"partials/footer.php\")",
+      "PowerShell(php -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\index.php\"; php -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\partials\\\\footer.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\index.php\"; & \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\snowbase3.0\\\\partials\\\\footer.php\")",
+      "PowerShell(Get-Content *)",
+      "Bash(gh pr *)",
+      "Bash(git commit *)",
+      "Bash(/review *)"
     ]
   }
 }

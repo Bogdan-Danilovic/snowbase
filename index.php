@@ -74,11 +74,18 @@ include 'partials/head.php';
     </div>
     <div class="vhero-overlay"></div>
 
+    <div class="vhero-snow" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+    </div>
+
     <div class="vhero-content">
-        <div class="vhero-eyebrow">Vrh Sezone</div>
+        <div class="vhero-eyebrow">Top Skijališta</div>
         <h1 class="vhero-title">
             Od Beograda do<br>
-            <em>najvećih</em> Alpa
+            <em>Alpskih</em> Vrhova
         </h1>
         <p class="vhero-subtitle">
             Snowbase je premium ski katalog za one koji traže više od skijališta —
@@ -100,6 +107,29 @@ include 'partials/head.php';
     <div class="vhero-scroll">
         <span>Skroluj</span>
         <div class="scroll-line"></div>
+    </div>
+
+    <div class="vhero-mountains" aria-hidden="true">
+        <svg viewBox="0 0 1440 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="heroMtn1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:rgba(0,204,255,0.05)"/>
+                    <stop offset="50%" style="stop-color:rgba(124,111,255,0.07)"/>
+                    <stop offset="100%" style="stop-color:rgba(0,204,255,0.05)"/>
+                </linearGradient>
+                <linearGradient id="heroMtn2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:rgba(0,204,255,0.07)"/>
+                    <stop offset="50%" style="stop-color:rgba(124,111,255,0.1)"/>
+                    <stop offset="100%" style="stop-color:rgba(0,204,255,0.07)"/>
+                </linearGradient>
+            </defs>
+            <path d="M0 180 L160 95 L280 130 L420 55 L580 105 L700 70 L840 100 L980 45 L1120 85 L1260 55 L1380 80 L1440 65 L1440 180 Z"
+                  fill="url(#heroMtn1)"/>
+            <path d="M0 180 L200 110 L340 148 L500 85 L660 138 L800 95 L960 125 L1100 78 L1240 112 L1380 88 L1440 105 L1440 180 Z"
+                  fill="url(#heroMtn2)"/>
+            <path d="M0 180 L240 128 L400 160 L560 100 L720 155 L880 118 L1040 145 L1180 102 L1320 135 L1440 120 L1440 180 Z"
+                  fill="rgba(4,6,13,0.78)"/>
+        </svg>
     </div>
 </section>
 
@@ -133,7 +163,7 @@ include 'partials/head.php';
      4. PARTNERS
      ============================================================ -->
 <section class="partners-section" id="partneri">
-    <div class="partners-label">Premium Partneri &amp; Preporučena Oprema</div>
+    <div class="partners-label">Premium Partneri </div>
     <div class="partners-track">
         <a class="partner-item" data-category="Skije" href="https://www.elanskis.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">ELAN<span class="logo-tag">®</span></span>
@@ -166,7 +196,7 @@ include 'partials/head.php';
     <div class="ymap-header reveal">
         <span class="section-eyebrow">Logistika iz Beograda</span>
         <h2 class="section-heading">Naše <span>Destinacije</span> na mapi</h2>
-        <p class="ymap-subtitle">Realna geografska mapa sa svih 8 ski destinacija</p>
+        <p class="ymap-subtitle">Mapa destinacija</p>
     </div>
 
     <div class="ymap-container reveal">
@@ -238,9 +268,8 @@ include 'partials/head.php';
         <span class="section-eyebrow">Snowbase Katalog</span>
         <h2 class="section-heading">Ski <span>Destinacije</span></h2>
         <p class="catalog-intro">
-            Od Kopaonika do Zermatt-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
+            Od Kopaonika do Val Thorens-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
         </p>
-        <div class="section-divider"></div>
     </div>
 
     <div class="dest-grid">

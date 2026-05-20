@@ -2,7 +2,7 @@
 /**
  * destinacija.php — Snowbase
  * Bogata DB-driven stranica destinacije: hero mapa, vreme, live status,
- * smestaj, prevoz, logistika kalkulator, ski pas, oprema & skola, recenzije, FAQ.
+ * smestaj, prevoz, logistika kalkulator, ski pas, oprema & skola, recenzije.
  *
  * Svi podaci dolaze iz baze. URL: destinacija.php?id=X
  */
@@ -81,14 +81,6 @@ $recenzije = array_map(function($r) {
     $r['tagovi'] = $r['tagovi'] ? (json_decode($r['tagovi'], true) ?: []) : [];
     return $r;
 }, $recenzije_raw);
-
-/* FAQ — globalni (NULL) + per-destinacija */
-$faq = [];
-try {
-    $s = $pdo->prepare("SELECT pitanje, odgovor FROM faq WHERE aktivan = 1 AND (destinacija_id = ? OR destinacija_id IS NULL) ORDER BY destinacija_id IS NULL, redosled, id");
-    $s->execute([$id]);
-    $faq = $s->fetchAll();
-} catch (PDOException $e) {}
 
 /* ============================================================
    4. STAZE PUTANJE — label mapa za tipove (lako prosirivo)
@@ -222,7 +214,6 @@ include 'partials/head.php';
             <div class="reveal section-block" id="ski-info">
                 <span class="section-eyebrow">Realtime</span>
                 <h2 class="section-title">Ski <span>&amp; Info</span> Centar</h2>
-                <div class="section-divider"></div>
 
                 <div class="ski-info-grid">
 
@@ -323,7 +314,6 @@ include 'partials/head.php';
             <div class="reveal section-block" id="smestaj">
                 <span class="section-eyebrow">Partnerski objekti</span>
                 <h2 class="section-title">Raspoloživ <span>Smeštaj</span></h2>
-                <div class="section-divider"></div>
 
                 <div class="hotel-grid">
                     <?php foreach ($hoteli as $h): ?>
@@ -359,7 +349,6 @@ include 'partials/head.php';
             <div class="reveal section-block" id="prevoz">
                 <span class="section-eyebrow">Iz Beograda do staze</span>
                 <h2 class="section-title">Opcije <span>Prevoza</span></h2>
-                <div class="section-divider"></div>
 
                 <div class="transport-grid">
                     <?php foreach ($transport as $t):
@@ -393,7 +382,6 @@ include 'partials/head.php';
                 <span class="section-eyebrow">Transparentne cene</span>
                 <h2 class="section-title">Cene <span>Ski Pasa</span></h2>
                 <p class="pas-intro">Cene po kategoriji i trajanju. Ukupan iznos za vašu grupu pogledajte u kalkulatoru iznad.</p>
-                <div class="section-divider"></div>
 
                 <div class="pas-table-wrap reveal">
                     <table class="pas-table">
@@ -431,7 +419,6 @@ include 'partials/head.php';
             <div class="reveal section-block" id="oprema">
                 <span class="section-eyebrow">Agencijski paketi</span>
                 <h2 class="section-title">Oprema <span>&amp; Škola</span></h2>
-                <div class="section-divider"></div>
 
                 <div class="equipment-section-grid">
 
@@ -512,7 +499,6 @@ include 'partials/head.php';
             <div class="reveal section-block" id="utisci">
                 <span class="section-eyebrow">Verifikovani putnici</span>
                 <h2 class="section-title">Iskustva <span>Putnika</span></h2>
-                <div class="section-divider"></div>
 
                 <div class="reviews-grid">
                     <?php foreach ($recenzije as $rec): ?>
@@ -535,33 +521,6 @@ include 'partials/head.php';
                                 <div class="review-date"><?php echo htmlspecialchars($rec['datum']); ?></div>
                             </div>
                             <div class="review-check">✓</div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <!-- VIII. FAQ -->
-            <?php if (!empty($faq)): ?>
-            <div class="reveal section-block" id="faq">
-                <span class="section-eyebrow">Sve što trebate znati</span>
-                <h2 class="section-title">Česta <span>Pitanja</span></h2>
-                <div class="section-divider"></div>
-
-                <div class="faq-list">
-                    <?php foreach ($faq as $i => $q): ?>
-                    <div class="faq-item" id="faq-<?php echo (int)$i; ?>">
-                        <button class="faq-question" type="button" data-faq-index="<?php echo (int)$i; ?>">
-                            <span><?php echo htmlspecialchars($q['pitanje']); ?></span>
-                            <span class="faq-chevron">
-                                <svg viewBox="0 0 12 12" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="2,4 6,8 10,4"/>
-                                </svg>
-                            </span>
-                        </button>
-                        <div class="faq-answer">
-                            <div class="faq-answer-inner"><?php echo htmlspecialchars($q['odgovor']); ?></div>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -608,15 +567,6 @@ const revealObs = new IntersectionObserver(entries => {
 }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
 document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
-/* ---- FAQ accordion ---- */
-document.querySelectorAll('.faq-question').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const item = btn.closest('.faq-item');
-        const isOpen = item.classList.contains('open');
-        document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('open'));
-        if (!isOpen) item.classList.add('open');
-    });
-});
 </script>
 
 <?php include 'partials/footer.php'; ?>
