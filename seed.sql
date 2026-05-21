@@ -11,7 +11,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- CLEANUP — brise sve seed podatke (ne dira staze_putanje)
 DELETE FROM `ticker_items`;
-DELETE FROM `faq`;
 DELETE FROM `recenzije`;
 DELETE FROM `skola_paketi`;
 DELETE FROM `oprema_paketi`;
@@ -281,17 +280,6 @@ SELECT id,'Jelena & Vuk',
     'Treća sezona zaredom. Cena je fer, kvalitet izuzetan. Ski škola savršena za našu decu — preporučujemo svima.',
     5,'Februar 2026.', JSON_ARRAY('Porodično ★★★★★','Smeštaj ★★★★☆'), 20
 FROM `destinacije`;
-
--- FAQ
-INSERT INTO `faq` (`destinacija_id`,`pitanje`,`odgovor`,`redosled`) VALUES
-(NULL,'Da li je ski pas uključen u cenu aranžmana?',
- 'Ski pas nije automatski uključen u smeštajni aranžman — to nam omogućava da svaki paket prilagodimo vašim potrebama. Možete ga dokupiti kroz naš kalkulator na ovoj stranici, ili nas kontaktirati za paket deal (smeštaj + pas) koji je često povoljniji od pojedinačne kupovine.',10),
-(NULL,'Kakvo zdravstveno osiguranje je potrebno za ski destinacije?',
- 'Strogo preporučujemo putno osiguranje koje eksplicitno pokriva "zimske sportove i aktivnosti na snegu". Standardne turističke polise često ne pokrivaju skijaške povrede. Imamo dogovor sa partnerskim osiguravačem koji nudi specijalnu skijašku polisu od samo 8 EUR/dan po osobi.',20),
-(NULL,'Šta se dešava sa ski pasom ako se planina zatvori zbog nevremena?',
- 'Svaki skijaški centar iz našeg kataloga ima jasnu kompenzacionu politiku: za zatvaranje duže od 4 uzastopna sata vrši se proporcionalna nadoknada — ili produžetak pasa bez naknade, ili bon za narednu sezonu. Snowbase aktivno zastupa vaše interese.',30),
-(NULL,'Kako rezervisati ski školu ili rentiranje opreme?',
- 'Rezervacija se vrši minimum 48h pre željenog termina. Popunite kontakt obrazac na kraju stranice ili nas direktno kontaktirajte. Za grupe od 6 i više osoba odobravamo 15% popusta na kompletan paket opreme.',40);
 
 -- TICKER ITEMS
 INSERT INTO `ticker_items` (`tekst`,`redosled`) VALUES
