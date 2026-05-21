@@ -15,11 +15,21 @@
   --surface: #0c1220;
   --surface-hover: #111826;
   --surface-raised: #141d2e;
+    /* Pozadine */
+    --void:          #04060d;
+    --abyss:         #070c18;
+    --surface:       #0c1220;
+    --surface-hover: #111826;
+    --surface-raised:#141d2e;
 
   /* Tekst */
   --text-primary: #e4ecf5;
   --text-secondary: #7a8a9e;
   --text-muted: #3d4f65;
+    /* Tekst */
+    --text-primary:  #e4ecf5;
+    --text-secondary:#7a8a9e;
+    --text-muted:    #3d4f65;
 
   /* Akcent boje — definisane jednom, koriste se svuda preko var(--ice) */
   --ice: #00e5ff;
@@ -28,22 +38,38 @@
   --ice-glow: rgba(var(--ice-rgb), 0.18);
   --frost: rgba(var(--ice-rgb), 0.04);
   --gold: #f0c070;
+    /* Akcent boje — definisane jednom, koriste se svuda preko var(--ice) */
+    --ice:           #00e5ff;
+    --ice-rgb:       0, 229, 255;
+    --ice-soft:      rgba(var(--ice-rgb), 0.08);
+    --ice-glow:      rgba(var(--ice-rgb), 0.18);
+    --frost:         rgba(var(--ice-rgb), 0.04);
+    --gold:          #f0c070;
 
   /* Ivice */
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-card: rgba(255, 255, 255, 0.09);
   --border-hover: rgba(var(--ice-rgb), 0.38);
+    /* Ivice */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-card:   rgba(255, 255, 255, 0.09);
+    --border-hover:  rgba(var(--ice-rgb), 0.38);
 
   /* Senke */
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.65);
   --shadow-hover:
     0 28px 70px rgba(0, 0, 0, 0.75), 0 0 50px rgba(var(--ice-rgb), 0.12);
   --glow-ice: 0 0 30px rgba(var(--ice-rgb), 0.3);
+    /* Senke */
+    --shadow-card:  0 20px 60px rgba(0, 0, 0, 0.55);
+    --shadow-hover: 0 28px 70px rgba(0, 0, 0, 0.65),
+                    0 0  50px rgba(var(--ice-rgb), 0.07);
+    --glow-ice:     0 0 30px rgba(var(--ice-rgb), 0.25);
 
-  /* Easing */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    /* Easing */
+    --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-elastic:cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   /* Zaobljenost */
   --r-sm: 8px;
@@ -51,9 +77,17 @@
   --r-lg: 20px;
   --r-xl: 28px;
   --r-pill: 100px;
+    /* Zaobljenost */
+    --r-sm:  8px;
+    --r-md:  14px;
+    --r-lg:  20px;
+    --r-xl:  28px;
+    --r-pill:100px;
 
   /* Razmak između sekcija (destinacija.php) */
   --section-gap: 120px;
+    /* Razmak između sekcija (destinacija.php) */
+    --section-gap: 80px;
 }
 
 /* --------------------------------------------------------------------------
@@ -150,6 +184,21 @@ body::after {
     inset -150px -150px 350px rgba(0, 50, 100, 0.04);
   animation: aurora-drift 22s ease-in-out infinite alternate;
   will-change: transform;
+    content: '';
+    position: absolute;
+    inset: -40%;
+    background:
+        radial-gradient(ellipse 80% 55% at 18% 28%,
+            rgba(0, 90, 140, 0.22) 0%, transparent 58%),
+        radial-gradient(ellipse 60% 45% at 82% 72%,
+            rgba(0, 50, 100, 0.18) 0%, transparent 58%),
+        radial-gradient(ellipse 70% 35% at 50% 2%,
+            rgba(0, 130, 170, 0.1)  0%, transparent 50%);
+    box-shadow:
+        inset  150px  150px 350px rgba(var(--ice-rgb), 0.04),
+        inset -150px -150px 350px rgba(0, 50, 100, 0.04);
+    animation: aurora-drift 22s ease-in-out infinite alternate;
+    will-change: transform;
 }
 
 /* Sloj 2 — hladni ice naglasci */
@@ -423,6 +472,10 @@ nav.scrolled {
   transform: translateY(-12px) scale(1.05);
   box-shadow: 0 35px 80px rgba(0, 0, 0, 0.7), 0 0 60px rgba(var(--ice-rgb), 0.15);
   animation: border-glow 3s ease-in-out infinite;
+    border-color: var(--border-hover);
+    transform: translateY(-7px) scale(1.006);
+    box-shadow: var(--shadow-hover);
+    animation: border-glow 3s ease-in-out infinite;
 }
 
 .dest-card:hover::before {
@@ -796,6 +849,10 @@ nav.scrolled {
     grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
     gap: 20px;
   }
+    .dest-grid {
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 20px;
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -815,6 +872,10 @@ nav.scrolled {
     grid-template-columns: 1fr;
     gap: 18px;
   }
+
+    .container    { padding: 108px 18px 56px; }
+
+    .dest-grid    { grid-template-columns: 1fr; gap: 18px; }
 
   .dest-title {
     font-size: 1.55rem;
@@ -858,17 +919,14 @@ nav.scrolled {
 }
 
 /* Subtle border glow animacija na hover karticu (vidi .dest-card:hover) */
+/* Subtle border glow animacija na hover karticu (vidi .dest-card:hover) */
 @keyframes border-glow {
-  0%,
-  100% {
-    box-shadow: inset 0 0 10px rgba(var(--ice-rgb), 0);
-  }
-  50% {
-    box-shadow: inset 0 0 15px rgba(var(--ice-rgb), 0.1);
-  }
+    0%, 100% { box-shadow: inset 0 0 10px rgba(var(--ice-rgb), 0); }
+    50%      { box-shadow: inset 0 0 15px rgba(var(--ice-rgb), 0.1); }
 }
 
 /* ==========================================================================
+   23. DESTINACIJA.PHP - SPECIFIČNE SEKCIJE (Vreme, Prevoz, Ski Pas)
    23. DESTINACIJA.PHP - SPECIFIČNE SEKCIJE (Vreme, Prevoz, Ski Pas)
    ========================================================================== */
 
@@ -986,34 +1044,10 @@ nav.scrolled {
 }
 
 /* Status Staza */
-.live-badge {
-  display: inline-block;
-  background: rgba(255, 71, 87, 0.1);
-  color: #ff4757;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 1px solid rgba(255, 71, 87, 0.2);
-  margin-bottom: 20px;
-}
-.staze-bar-row {
-  margin-bottom: 15px;
-}
-.staze-bar-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  margin-bottom: 6px;
-}
-.staze-type-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-}
+.live-badge { display: inline-block; background: rgba(255, 71, 87, 0.1); color: #ff4757; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255, 71, 87, 0.2); margin-bottom: 20px; }
+.staze-bar-row { margin-bottom: 15px; }
+.staze-bar-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; }
+.staze-type-label { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
 .staze-dot {
   display: inline-block;
   width: 8px;
@@ -1033,30 +1067,20 @@ nav.scrolled {
 .staze-dot.crna {
   background: #cbd5e1;
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
 }
-.staze-progress-track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.staze-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 1s ease-out;
-}
-.zicara-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 15px;
-  border-top: 1px solid var(--border-subtle);
-  margin-top: 20px;
-}
-.zicara-status {
-  font-weight: 600;
-  color: var(--text-primary);
-}
+.staze-dot.plava  { background: #2383ff; box-shadow: 0 0 6px #2383ff; }
+.staze-dot.crvena { background: #fa1a1a; box-shadow: 0 0 6px #fa1a1a; }
+.staze-dot.crna   { background: #cbd5e1; box-shadow: 0 0 6px rgba(255, 255, 255, 0.3); }
+.staze-progress-track { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+.staze-progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease-out; }
+.zicara-row { display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid var(--border-subtle); margin-top: 20px; }
+.zicara-status { font-weight: 600; color: var(--text-primary); }
 
 /* III. OPCIJE PREVOZA */
 .transport-grid {
@@ -1095,6 +1119,11 @@ nav.scrolled {
   background: var(--ice);
   box-shadow: 0 0 15px var(--ice);
 }
+.transport-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+.transport-card { background: var(--surface); border: 1px solid var(--border-card); border-radius: var(--r-md); position: relative; overflow: hidden; transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s; }
+.transport-card:hover { transform: translateY(-5px); border-color: rgba(var(--ice-rgb), 0.3); box-shadow: var(--shadow-hover); }
+.transport-accent { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--border-subtle); transition: background 0.3s, box-shadow 0.3s; }
+.transport-card:hover .transport-accent { background: var(--ice); box-shadow: 0 0 15px var(--ice); }
 /* Manje kartice (bez ikona i podnaslova) */
 .transport-body {
   padding: 24px 22px;
@@ -1111,11 +1140,11 @@ nav.scrolled {
   list-style: none;
 }
 .transport-info-list li {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  padding: 9px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 9px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
 }
 .transport-info-list li:last-child {
   border-bottom: none;
@@ -1158,6 +1187,15 @@ nav.scrolled {
   color: var(--ice);
   font-weight: 600;
 }
+.transport-info-list li:last-child { border-bottom: none; }
+.transport-info-list li span { color: var(--text-secondary); }
+/* V. SKI PAS — tabela cena */
+.pas-table-wrap { background: var(--surface); border-radius: var(--r-md); border: 1px solid var(--border-card); overflow: hidden; }
+.pas-table { width: 100%; border-collapse: collapse; text-align: left; }
+.pas-table th { background: rgba(0,0,0,0.3); padding: 20px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); border-bottom: 1px solid var(--border-card); }
+.pas-table td { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.02); transition: background 0.2s; }
+.pas-table tr:hover td { background: rgba(255,255,255,0.02); }
+.pas-table .best-col, .pas-table .best { background: rgba(var(--ice-rgb), 0.03); color: var(--ice); font-weight: 600; }
 
 /* VI. OPREMA I ŠKOLA */
 .equipment-section-grid {
@@ -1330,6 +1368,16 @@ nav.scrolled {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+.reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+.review-card { background: var(--surface); padding: 30px; border-radius: var(--r-md); border: 1px solid var(--border-card); transition: transform 0.3s, border-color 0.3s; }
+.review-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.15); }
+.review-stars { color: var(--gold); margin-bottom: 15px; font-size: 1.1rem; }
+.review-tags { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+.review-tag { font-size: 0.65rem; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px; color: var(--text-secondary); }
+.review-text { font-size: 0.88rem; font-style: italic; color: var(--text-primary); line-height: 1.7; margin-bottom: 25px; }
+.review-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 15px; }
+.review-author { font-weight: 600; font-size: 0.9rem; }
+.review-date { font-size: 0.75rem; color: var(--text-muted); }
 
 /* REZOLUCIJE / RESPONSIVE (ISPOD 960px) */
 @media (max-width: 960px) {
@@ -1339,6 +1387,8 @@ nav.scrolled {
     gap: 30px;
   }
 }
+    .ski-info-grid, .equipment-section-grid { grid-template-columns: 1fr; gap: 30px; }
+}
 
 /* ==========================================================================
    HOME PAGE — sekcije specifične za index.php
@@ -1347,23 +1397,23 @@ nav.scrolled {
 
 /* ----------------------- HOME · Video Hero ----------------------- */
 .video-hero {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  min-height: 600px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 600px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .vhero-video-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
 }
 
 .vhero-video-wrap iframe,
@@ -1794,6 +1844,16 @@ nav.scrolled {
   text-transform: uppercase;
   margin-bottom: 16px;
   opacity: 0.8;
+/* ----------------------- Sekcijski naslovi (home + destinacija) ----------------------- */
+.section-eyebrow {
+    display: block;
+    color: var(--ice);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
 }
 
 .section-heading {
@@ -2030,20 +2090,15 @@ nav.scrolled {
   .partners-section {
     padding-inline: 28px;
   }
+    .testimonials-section,
+    .catalog-section,
+    .partners-section { padding-inline: 28px; }
 
-  .review-card-main {
-    padding: 32px 28px;
-  }
-  .carousel-arrow {
-    display: none;
-  }
+    .review-card-main { padding: 32px 28px; }
+    .carousel-arrow   { display: none; }
 
-  .partners-track {
-    gap: 0;
-  }
-  .partner-item {
-    padding: 14px 18px;
-  }
+    .partners-track { gap: 0; }
+    .partner-item   { padding: 14px 18px; }
 }
 
 @media (max-width: 560px) {
@@ -2057,6 +2112,9 @@ nav.scrolled {
     font-size: 0.6rem;
     padding: 10px 14px;
   }
+    .vhero-title      { font-size: 2.6rem; }
+    .review-text-main { font-size: 1.2rem; }
+    .ticker-label     { font-size: 0.6rem; padding: 10px 14px; }
 }
 
 /* ==========================================================================
@@ -2189,6 +2247,12 @@ nav.scrolled {
   color: #f59e0b;
 }
 
+/* Univerzalno — letnji tipovi staza. Frontend ne mora znati za njih unapred:
+   PHP zalepi `class="staza pesacka-laka"` iz baze, CSS ih ovde "prepoznaje". */
+.slope-km.morska-ruta      { color: #06b6d4; }
+.slope-km.pesacka-laka     { color: #84cc16; }
+.slope-km.pesacka-zahtevna { color: #f59e0b; }
+
 /* Live status panel — zicare i vidljivost */
 .zicara-label {
   font-size: 0.82rem;
@@ -2209,6 +2273,11 @@ nav.scrolled {
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 4px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
 }
 
 .vidljivost-val {
@@ -2335,6 +2404,8 @@ nav.scrolled {
 .equipment-note {
   font-size: 0.75rem;
   color: var(--text-muted);
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .equipment-note.recommend {
@@ -2376,6 +2447,7 @@ nav.scrolled {
 
 /* ==========================================================================
    SNOWBASE — Live status panel progress fill po tipu staze
+   SNOWBASE — Live status panel progress fill po tipu staze
    ========================================================================== */
 .staze-progress-fill.plava {
   background: linear-gradient(90deg, rgba(35, 131, 255, 0.4), #2383ff);
@@ -2386,6 +2458,9 @@ nav.scrolled {
 .staze-progress-fill.crna {
   background: linear-gradient(90deg, rgba(203, 213, 225, 0.4), #cbd5e1);
 }
+.staze-progress-fill.plava  { background: linear-gradient(90deg, rgba(35, 131, 255, 0.4), #2383ff); }
+.staze-progress-fill.crvena { background: linear-gradient(90deg, rgba(250, 26, 26, 0.4), #fa1a1a); }
+.staze-progress-fill.crna   { background: linear-gradient(90deg, rgba(203, 213, 225, 0.4), #cbd5e1); }
 
 /* ==========================================================================
    SNOWBASE — Nav responsive
