@@ -1,16 +1,16 @@
 <?php
 /**
- * db.php — PDO konekcija na MySQL bazu `peak_palm`.
- * Uključuje se na vrhu svake stranice koja čita iz baze.
+ * db.php — PDO konekcija na MySQL bazu (Railway / lokalni XAMPP)
  */
 
-$host = 'localhost';
-$db   = 'snowbase';
-$user = 'root';
-$pass = ''; // default XAMPP lozinka je prazna
+$host    = getenv('MYSQLHOST')     ?: 'localhost';
+$db      = getenv('MYSQLDATABASE') ?: 'snowbase';
+$user    = getenv('MYSQLUSER')     ?: 'root';
+$pass    = getenv('MYSQLPASSWORD') ?: '';
+$port    = getenv('MYSQLPORT')     ?: '3306';
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
