@@ -1,4 +1,5 @@
-FROM php:8.3-apache
-RUN a2dismod mpm_event && a2enmod mpm_prefork
+FROM php:8.3-cli
 RUN docker-php-ext-install pdo pdo_mysql mysqli
-COPY . /var/www/html/
+COPY . /app
+WORKDIR /app
+CMD php -S 0.0.0.0:$PORT
