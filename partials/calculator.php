@@ -293,6 +293,9 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
     const $hPas    = document.getElementById('rc-h-pas');
     const $hTr     = document.getElementById('rc-h-tr');
     const $cta     = document.getElementById('rc-cta');
+    const $prAuto  = document.getElementById('rc-tr-auto-price');
+    const $prBus   = document.getElementById('rc-tr-bus-price');
+    const $prAvion = document.getElementById('rc-tr-avion-price');
 
     /* state */
     let curr = {
@@ -356,13 +359,22 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
             pasBreakdown.push(`${n}× ${kat}`);
         });
 
-        /* Prevoz */
+        /* Prevoz — izracunaj sve tri preview cene za kartice */
+        const potrosnja = parseFloat($potr.value) || 7;
+        const cenaG     = parseFloat($cenaG.value) || 1.65;
+        const autoCena  = (dest.distanca * 2 / 100) * potrosnja * cenaG + (dest.putarina * 2);
+        const busCena   = (dest.transport.bus   || 0) * totalPeople;
+        const avionCena = (dest.transport.avion || 0) * totalPeople;
+
+        $prAuto.textContent  = eur(autoCena);
+        $prBus.textContent   = eur(busCena);
+        $prAvion.textContent = avionCena === 0 ? '—' : eur(avionCena);
+
+        /* Aktivni izbor za detaljni breakdown desno */
         let trTotal = 0, trDesc = '';
         if (curr.tr === 'auto') {
-            const potrosnja = parseFloat($potr.value) || 7;
-            const cenaG = parseFloat($cenaG.value) || 1.65;
             const gorivo = (dest.distanca * 2 / 100) * potrosnja * cenaG;
-            const putar = dest.putarina * 2;
+            const putar  = dest.putarina * 2;
             trTotal = gorivo + putar;
             trDesc = `${dest.distanca * 2} km povratno · gorivo €${gorivo.toFixed(0)} · putarina €${putar.toFixed(0)}`;
         } else if (curr.tr === 'bus') {

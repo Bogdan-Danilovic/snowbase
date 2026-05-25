@@ -74,11 +74,18 @@ include 'partials/head.php';
     </div>
     <div class="vhero-overlay"></div>
 
+    <div class="vhero-snow" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+    </div>
+
     <div class="vhero-content">
-        <div class="vhero-eyebrow">Vrh Sezone</div>
+        <div class="vhero-eyebrow">Top Skijališta</div>
         <h1 class="vhero-title">
             Od Beograda do<br>
-            <em>najvećih</em> Alpa
+            <em>Alpskih</em> Vrhova
         </h1>
         <p class="vhero-subtitle">
             Snowbase je premium ski katalog za one koji traže više od skijališta —
@@ -100,6 +107,29 @@ include 'partials/head.php';
     <div class="vhero-scroll">
         <span>Skroluj</span>
         <div class="scroll-line"></div>
+    </div>
+
+    <div class="vhero-mountains" aria-hidden="true">
+        <svg viewBox="0 0 1440 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="heroMtn1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:rgba(0,204,255,0.05)"/>
+                    <stop offset="50%" style="stop-color:rgba(124,111,255,0.07)"/>
+                    <stop offset="100%" style="stop-color:rgba(0,204,255,0.05)"/>
+                </linearGradient>
+                <linearGradient id="heroMtn2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:rgba(0,204,255,0.07)"/>
+                    <stop offset="50%" style="stop-color:rgba(124,111,255,0.1)"/>
+                    <stop offset="100%" style="stop-color:rgba(0,204,255,0.07)"/>
+                </linearGradient>
+            </defs>
+            <path d="M0 180 L160 95 L280 130 L420 55 L580 105 L700 70 L840 100 L980 45 L1120 85 L1260 55 L1380 80 L1440 65 L1440 180 Z"
+                  fill="url(#heroMtn1)"/>
+            <path d="M0 180 L200 110 L340 148 L500 85 L660 138 L800 95 L960 125 L1100 78 L1240 112 L1380 88 L1440 105 L1440 180 Z"
+                  fill="url(#heroMtn2)"/>
+            <path d="M0 180 L240 128 L400 160 L560 100 L720 155 L880 118 L1040 145 L1180 102 L1320 135 L1440 120 L1440 180 Z"
+                  fill="rgba(4,6,13,0.78)"/>
+        </svg>
     </div>
 </section>
 
@@ -133,7 +163,7 @@ include 'partials/head.php';
      4. PARTNERS
      ============================================================ -->
 <section class="partners-section" id="partneri">
-    <div class="partners-label">Premium Partneri &amp; Preporučena Oprema</div>
+    <div class="partners-label">Premium Partneri </div>
     <div class="partners-track">
         <a class="partner-item" data-category="Skije" href="https://www.elanskis.com/" target="_blank" rel="noopener noreferrer">
             <span class="partner-logo">ELAN<span class="logo-tag">®</span></span>
@@ -166,7 +196,7 @@ include 'partials/head.php';
     <div class="ymap-header reveal">
         <span class="section-eyebrow">Logistika iz Beograda</span>
         <h2 class="section-heading">Naše <span>Destinacije</span> na mapi</h2>
-        <p class="ymap-subtitle">Realna geografska mapa sa svih 8 ski destinacija</p>
+        <p class="ymap-subtitle">Mapa destinacija</p>
     </div>
 
     <div class="ymap-container reveal">
@@ -186,59 +216,14 @@ include 'partials/head.php';
 <script src="https://api-maps.yandex.ru/2.1/?lang=en_US" defer></script>
 
 <!-- ============================================================
-     6. RECENZIJE
-     ============================================================ -->
-<?php if (!empty($recenzije)): ?>
-<section class="testimonials-section" id="utisci">
-    <div class="testimonials-header reveal">
-        <span class="section-eyebrow">Putnici o nama</span>
-        <h2 class="section-heading">Pravi <span>Utisci</span></h2>
-    </div>
-    <div class="reviews-carousel reveal" id="reviewsCarousel">
-        <button class="carousel-arrow prev" type="button" data-dir="-1" aria-label="Prethodni">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
-        </button>
-        <div class="reviews-track" id="reviewsTrack">
-            <?php foreach ($recenzije as $i => $rev): ?>
-            <div class="review-slide">
-                <div class="review-card-main<?php echo $i === 0 ? ' active-slide' : ''; ?>">
-                    <div class="review-stars">
-                        <?php for ($s = 0; $s < (int)$rev['ocena']; $s++): ?><span class="star">★</span><?php endfor; ?>
-                    </div>
-                    <p class="review-text-main">"<?php echo htmlspecialchars($rev['tekst']); ?>"</p>
-                    <div class="review-author">
-                        <div class="review-avatar-main"><?php echo htmlspecialchars($rev['avatar']); ?></div>
-                        <div>
-                            <div class="review-meta-name"><?php echo htmlspecialchars($rev['ime']); ?></div>
-                            <div class="review-meta-dest"><?php echo htmlspecialchars($rev['dest']); ?></div>
-                            <div class="review-meta-date"><?php echo htmlspecialchars($rev['datum']); ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-        <button class="carousel-arrow next" type="button" data-dir="1" aria-label="Sledeći">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,3 11,8 6,13"/></svg>
-        </button>
-        <div class="carousel-nav" id="carouselNav">
-            <?php foreach ($recenzije as $i => $rev): ?>
-                <button class="carousel-dot<?php echo $i === 0 ? ' active' : ''; ?>" type="button" data-index="<?php echo (int)$i; ?>" aria-label="Recenzija <?php echo (int)$i + 1; ?>"></button>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
-
-<!-- ============================================================
-     KATALOG DESTINACIJA
+     6. KATALOG DESTINACIJA
      ============================================================ -->
 <section class="catalog-section" id="katalog">
     <div class="catalog-header-new reveal">
         <span class="section-eyebrow">Snowbase Katalog</span>
         <h2 class="section-heading">Ski <span>Destinacije</span></h2>
         <p class="catalog-intro">
-            Od Kopaonika do Zermatt-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
+            Od Kopaonika do Val Thorens-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
         </p>
     </div>
 
@@ -283,6 +268,106 @@ include 'partials/head.php';
 </section>
 
 <!-- ============================================================
+     7. RECENZIJE
+     ============================================================ -->
+<?php if (!empty($recenzije)): ?>
+<section class="testimonials-section" id="utisci">
+    <div class="testimonials-header reveal">
+        <span class="section-eyebrow">Putnici o nama</span>
+        <h2 class="section-heading">Pravi <span>Utisci</span></h2>
+    </div>
+    <div class="reviews-carousel reveal" id="reviewsCarousel">
+        <button class="carousel-arrow prev" type="button" data-dir="-1" aria-label="Prethodni">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
+        </button>
+        <div class="reviews-track" id="reviewsTrack">
+            <?php foreach ($recenzije as $i => $rev): ?>
+            <div class="review-slide">
+                <div class="review-card-main<?php echo $i === 0 ? ' active-slide' : ''; ?>">
+                    <div class="review-stars">
+                        <?php for ($s = 0; $s < (int)$rev['ocena']; $s++): ?><span class="star">★</span><?php endfor; ?>
+                    </div>
+                    <p class="review-text-main">"<?php echo htmlspecialchars($rev['tekst']); ?>"</p>
+                    <div class="review-author">
+                        <div class="review-avatar-main"><?php echo htmlspecialchars($rev['avatar']); ?></div>
+                        <div>
+                            <div class="review-meta-name"><?php echo htmlspecialchars($rev['ime']); ?></div>
+                            <div class="review-meta-dest"><?php echo htmlspecialchars($rev['dest']); ?></div>
+                            <div class="review-meta-date"><?php echo htmlspecialchars($rev['datum']); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <button class="carousel-arrow next" type="button" data-dir="1" aria-label="Sledeći">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,3 11,8 6,13"/></svg>
+        </button>
+        <div class="carousel-nav" id="carouselNav">
+            <?php foreach ($recenzije as $i => $rev): ?>
+                <button class="carousel-dot<?php echo $i === 0 ? ' active' : ''; ?>" type="button" data-index="<?php echo (int)$i; ?>" aria-label="Recenzija <?php echo (int)$i + 1; ?>"></button>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<!-- ============================================================
+<<<<<<< HEAD
+=======
+     KATALOG DESTINACIJA
+     ============================================================ -->
+<section class="catalog-section" id="katalog">
+    <div class="catalog-header-new reveal">
+        <span class="section-eyebrow">Snowbase Katalog</span>
+        <h2 class="section-heading">Ski <span>Destinacije</span></h2>
+        <p class="catalog-intro">
+            Od Kopaonika do Val Thorens-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
+        </p>
+    </div>
+
+    <div class="dest-grid">
+        <?php foreach ($destinacije as $d): ?>
+        <div class="dest-card reveal">
+            <div class="dest-img-container">
+                <img src="Slike/<?php echo htmlspecialchars($d['slug']); ?>/hero.jpg"
+                     class="dest-img" alt="<?php echo htmlspecialchars($d['naziv']); ?>"
+                     width="800" height="500" loading="lazy" decoding="async"
+                     onerror="this.src='https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&amp;w=800&amp;auto=format&amp;fit=crop'">
+            </div>
+            <div class="dest-body">
+                <h2 class="dest-title"><?php echo htmlspecialchars($d['naziv']); ?></h2>
+                <p class="dest-desc">
+                    <?php
+                        $opis = htmlspecialchars($d['opis'] ?? '');
+                        echo (strlen($opis) > 120) ? mb_substr($opis, 0, 115) . '...' : $opis;
+                    ?>
+                </p>
+                <div class="dest-meta">
+                    <div class="meta-item">
+                        <span>Ukupno staza</span>
+                        <strong><?php echo (int)($d['ukupno_staza_km'] ?? 0); ?> km</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Žičara</span>
+                        <strong><?php echo (int)($d['broj_zicara'] ?? 0); ?></strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Udaljenost</span>
+                        <strong><?php echo (int)($d['distanca_od_bg_km'] ?? 0); ?> km</strong>
+                    </div>
+                </div>
+                <a href="destinacija.php?id=<?php echo (int)$d['id']; ?>" class="btn-view">
+                    Pogledaj detaljnije
+                </a>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<!-- ============================================================
+>>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
      JAVASCRIPT
      ============================================================ -->
 <script>
