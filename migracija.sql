@@ -1,26 +1,16 @@
 -- ============================================================================
-<<<<<<< HEAD
 -- Snowbase — SCHEMA + SEED (jedinstveni setup fajl)
 -- Pokrenuti pri prvoj instalaciji ili kad zelis da resetujes bazu.
 -- Brise sve postojece tabele i ubacuje pocetne podatke.
 -- Staze (SVG putanje) su hardkodovane u destinacija.php — ne cuvaju se vise u bazi.
-=======
--- Snowbase — SCHEMA
--- Kreira sve tabele. Pokrenuti samo pri prvoj instalaciji ili kad se menjaju
--- tabele. Brise sve podatke ukljucujuci rucno nacrtane staze!
--- Posle ovoga pokreni `seed.sql` za pocetne podatke.
->>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
 -- ============================================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-<<<<<<< HEAD
 -- ----------------------------------------------------------------------------
 -- 1. DROP — brise sve tabele
 -- ----------------------------------------------------------------------------
-=======
->>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
 DROP TABLE IF EXISTS `recenzije`;
 DROP TABLE IF EXISTS `ticker_items`;
 DROP TABLE IF EXISTS `skola_paketi`;
@@ -36,13 +26,10 @@ DROP TABLE IF EXISTS `ski_info`;
 DROP TABLE IF EXISTS `destinacije`;
 DROP TABLE IF EXISTS `granicni_prelazi`;
 
-<<<<<<< HEAD
 -- ----------------------------------------------------------------------------
 -- 2. CREATE — sve tabele
 -- ----------------------------------------------------------------------------
 
-=======
->>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
 -- GRANICNI PRELAZI
 CREATE TABLE `granicni_prelazi` (
     `id`                  INT AUTO_INCREMENT PRIMARY KEY,
@@ -168,23 +155,6 @@ CREATE TABLE `destinacije_slike` (
         REFERENCES `destinacije`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-<<<<<<< HEAD
-=======
--- STAZE PUTANJE (SVG) — popunjava se kroz admin/crtanje-staza.php
-CREATE TABLE `staze_putanje` (
-    `id`              INT AUTO_INCREMENT PRIMARY KEY,
-    `destinacija_id`  INT NOT NULL,
-    `tip_klasa`       VARCHAR(40)  NOT NULL,
-    `naziv`           VARCHAR(100) DEFAULT NULL,
-    `svg_d_putanja`   TEXT         NOT NULL,
-    `duzina_km`       DECIMAL(5,1) NOT NULL DEFAULT 0,
-    `redosled`        SMALLINT     NOT NULL DEFAULT 0,
-    KEY `idx_dest_tip` (`destinacija_id`, `tip_klasa`),
-    CONSTRAINT `fk_putanje_dest` FOREIGN KEY (`destinacija_id`)
-        REFERENCES `destinacije`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
->>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
 -- TRANSPORT OPCIJE
 CREATE TABLE `transport_opcije` (
     `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -259,7 +229,6 @@ CREATE TABLE `ticker_items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
-<<<<<<< HEAD
 
 -- ============================================================================
 -- 3. SEED — pocetni podaci
@@ -530,5 +499,3 @@ INSERT INTO `ticker_items` (`tekst`,`redosled`) VALUES
 ('Šid (SRB/HRV): Zadržavanje ~15 min',100),
 ('Kopaonik: -1°C · Sunčano · Domaća sezona u punom jeku',130),
 ('Bansko: 140 cm snega · Najpristupačnija opcija u regionu',140);
-=======
->>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
