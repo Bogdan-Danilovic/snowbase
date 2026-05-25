@@ -313,6 +313,61 @@ include 'partials/head.php';
 <?php endif; ?>
 
 <!-- ============================================================
+<<<<<<< HEAD
+=======
+     KATALOG DESTINACIJA
+     ============================================================ -->
+<section class="catalog-section" id="katalog">
+    <div class="catalog-header-new reveal">
+        <span class="section-eyebrow">Snowbase Katalog</span>
+        <h2 class="section-heading">Ski <span>Destinacije</span></h2>
+        <p class="catalog-intro">
+            Od Kopaonika do Val Thorens-a — kompletan paket za svaku destinaciju: logistika, smeštaj, oprema i mapa staza.
+        </p>
+    </div>
+
+    <div class="dest-grid">
+        <?php foreach ($destinacije as $d): ?>
+        <div class="dest-card reveal">
+            <div class="dest-img-container">
+                <img src="Slike/<?php echo htmlspecialchars($d['slug']); ?>/hero.jpg"
+                     class="dest-img" alt="<?php echo htmlspecialchars($d['naziv']); ?>"
+                     width="800" height="500" loading="lazy" decoding="async"
+                     onerror="this.src='https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&amp;w=800&amp;auto=format&amp;fit=crop'">
+            </div>
+            <div class="dest-body">
+                <h2 class="dest-title"><?php echo htmlspecialchars($d['naziv']); ?></h2>
+                <p class="dest-desc">
+                    <?php
+                        $opis = htmlspecialchars($d['opis'] ?? '');
+                        echo (strlen($opis) > 120) ? mb_substr($opis, 0, 115) . '...' : $opis;
+                    ?>
+                </p>
+                <div class="dest-meta">
+                    <div class="meta-item">
+                        <span>Ukupno staza</span>
+                        <strong><?php echo (int)($d['ukupno_staza_km'] ?? 0); ?> km</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Žičara</span>
+                        <strong><?php echo (int)($d['broj_zicara'] ?? 0); ?></strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Udaljenost</span>
+                        <strong><?php echo (int)($d['distanca_od_bg_km'] ?? 0); ?> km</strong>
+                    </div>
+                </div>
+                <a href="destinacija.php?id=<?php echo (int)$d['id']; ?>" class="btn-view">
+                    Pogledaj detaljnije
+                </a>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<!-- ============================================================
+>>>>>>> 883e5e55eb0085a587692ec39a11f80096525845
      JAVASCRIPT
      ============================================================ -->
 <script>
