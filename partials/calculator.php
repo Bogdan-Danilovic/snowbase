@@ -181,6 +181,9 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
                         <label class="rcalc-tr-card">
                             <input type="radio" name="rc-tr" value="auto" checked>
                             <div class="rcalc-tr-card-inner">
+                                <span class="rcalc-tr-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5"/><circle cx="7" cy="16" r="2"/><circle cx="17" cy="16" r="2"/><path d="M5 13h14v3H5z"/></svg>
+                                </span>
                                 <div class="rcalc-tr-meta">
                                     <strong>Auto</strong>
                                     <small>Gorivo + putarina</small>
@@ -191,6 +194,9 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
                         <label class="rcalc-tr-card">
                             <input type="radio" name="rc-tr" value="bus">
                             <div class="rcalc-tr-card-inner">
+                                <span class="rcalc-tr-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="14" rx="2"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/><line x1="4" y1="11" x2="20" y2="11"/></svg>
+                                </span>
                                 <div class="rcalc-tr-meta">
                                     <strong>Bus</strong>
                                     <small>Agencijski autobus</small>
@@ -201,6 +207,9 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
                         <label class="rcalc-tr-card">
                             <input type="radio" name="rc-tr" value="avion">
                             <div class="rcalc-tr-card-inner">
+                                <span class="rcalc-tr-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12l8-2 1-6 2 0 1 6 8 2v2l-8-2-1 6 2 1v1l-3-1-3 1v-1l2-1-1-6-8 2z"/></svg>
+                                </span>
                                 <div class="rcalc-tr-meta">
                                     <strong>Avion + Transfer</strong>
                                     <small>Najbrža opcija</small>
@@ -284,11 +293,9 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
     const $hPas    = document.getElementById('rc-h-pas');
     const $hTr     = document.getElementById('rc-h-tr');
     const $cta     = document.getElementById('rc-cta');
-
-    /* per-card transport prices */
-    const $trAutoPrice  = document.getElementById('rc-tr-auto-price');
-    const $trBusPrice   = document.getElementById('rc-tr-bus-price');
-    const $trAvionPrice = document.getElementById('rc-tr-avion-price');
+    const $prAuto  = document.getElementById('rc-tr-auto-price');
+    const $prBus   = document.getElementById('rc-tr-bus-price');
+    const $prAvion = document.getElementById('rc-tr-avion-price');
 
     /* state */
     let curr = {
@@ -352,35 +359,34 @@ $calc_initial = $calc_locked ?: (int)($calc_dests[0]['id'] ?? 0);
             pasBreakdown.push(`${n}× ${kat}`);
         });
 
-        /* Prevoz — racunaj cenu za sve 3 opcije (live update kartica) */
+        /* Prevoz — izracunaj sve tri preview cene za kartice */
         const potrosnja = parseFloat($potr.value) || 7;
-        const cenaG = parseFloat($cenaG.value) || 1.65;
-        const autoGorivo = (dest.distanca * 2 / 100) * potrosnja * cenaG;
-        const autoPutar  = dest.putarina * 2;
-        const autoCena   = autoGorivo + autoPutar;
-        const busCenaPo   = dest.transport.bus || 0;
-        const busCena     = busCenaPo * totalPeople;
-        const avionCenaPo = dest.transport.avion || 0;
-        const avionCena   = avionCenaPo * totalPeople;
+        const cenaG     = parseFloat($cenaG.value) || 1.65;
+        const autoCena  = (dest.distanca * 2 / 100) * potrosnja * cenaG + (dest.putarina * 2);
+        const busCena   = (dest.transport.bus   || 0) * totalPeople;
+        const avionCena = (dest.transport.avion || 0) * totalPeople;
 
-        $trAutoPrice.textContent  = eur(autoCena);
-        $trBusPrice.textContent   = busCenaPo   === 0 ? '—' : eur(busCena);
-        $trAvionPrice.textContent = avionCenaPo === 0 ? '—' : eur(avionCena);
+        $prAuto.textContent  = eur(autoCena);
+        $prBus.textContent   = eur(busCena);
+        $prAvion.textContent = avionCena === 0 ? '—' : eur(avionCena);
 
+        /* Aktivni izbor za detaljni breakdown desno */
         let trTotal = 0, trDesc = '';
         if (curr.tr === 'auto') {
-            trTotal = autoCena;
-            trDesc = `${dest.distanca * 2} km povratno · gorivo €${autoGorivo.toFixed(0)} · putarina €${autoPutar.toFixed(0)}`;
+            const gorivo = (dest.distanca * 2 / 100) * potrosnja * cenaG;
+            const putar  = dest.putarina * 2;
+            trTotal = gorivo + putar;
+            trDesc = `${dest.distanca * 2} km povratno · gorivo €${gorivo.toFixed(0)} · putarina €${putar.toFixed(0)}`;
         } else if (curr.tr === 'bus') {
-            trTotal = busCena;
-            trDesc = busCenaPo === 0
-                ? 'Nije primenljivo'
-                : `€${busCenaPo}/osobi × ${totalPeople} ${totalPeople === 1 ? 'osoba' : 'osoba'}`;
+            const cenaPo = dest.transport.bus || 0;
+            trTotal = cenaPo * totalPeople;
+            trDesc = `€${cenaPo}/osobi × ${totalPeople} ${totalPeople === 1 ? 'osoba' : 'osoba'}`;
         } else if (curr.tr === 'avion') {
-            trTotal = avionCena;
-            trDesc = avionCenaPo === 0
+            const cenaPo = dest.transport.avion || 0;
+            trTotal = cenaPo * totalPeople;
+            trDesc = cenaPo === 0
                 ? 'Nije primenljivo (domaća destinacija)'
-                : `€${avionCenaPo}/osobi × ${totalPeople} (avion + transfer)`;
+                : `€${cenaPo}/osobi × ${totalPeople} (avion + transfer)`;
         }
 
         const total = hotelTotal + pasTotal + trTotal;
