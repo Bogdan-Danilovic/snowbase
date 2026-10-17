@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#04060d">
+    <title>Bansko | Snowbase</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style 3.0.css">
+
+    </head>
+<body>
+
+<div class="fixed-bg"></div>
+
+<nav id="main-nav">
+    <div class="nav-side nav-side-left">
+                    <a href="index.html#katalog">
+                Katalog            </a>
+                    <a href="index.html#mapa">
+                Mapa            </a>
+            </div>
+
+    <a href="index.html" class="brand">
+    <svg class="brand-icon" viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- M-planina: levo peak srednji, sredinski dip, desno peak najvisi (sa tackom) -->
+        <path d="M3 27 L13 15 L18 20 L26 6 L34 27"
+              fill="none"
+              stroke="var(--ice)"
+              stroke-width="2.6"
+              stroke-linejoin="round"
+              stroke-linecap="round"/>
+        <!-- Tacka na vrhu viseg peaka -->
+        <circle cx="26" cy="6" r="1.7" fill="var(--ice)"/>
+    </svg>
+    <span class="brand-text">
+        SNOW<span class="brand-text-dot">·</span>BASE
+    </span>
+</a>
+
+    <div class="nav-side nav-side-right">
+                    <a href="index.html#partneri">
+                Partneri            </a>
+                    <a href="index.html#utisci">
+                Utisci            </a>
+            </div>
+</nav>
+
+<div class="main-content">
+
+    <!-- ================================================================
+         HERO — Fixed, fades on scroll
+         ================================================================ -->
+    <section class="hero-section" id="hero">
+        <div class="prava-mapa-container">
+            <svg viewBox="0 0 640 346" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+                                    <image href="Slike/bansko/mapa.jpg" width="640" height="346" preserveAspectRatio="xMidYMid slice"/>
+                                <g>
+                                    </g>
+            </svg>
+        </div>
+
+        <div class="info-side">
+            <span class="hero-label">
+                Bugarska · Pirin            </span>
+            <h1 class="hero-title">Bansko</h1>
+            <p class="hero-desc">Najpristupačnije pravo skijalište regiona — 75 km staza, gondola direktno iz centra grada, balkanska gostoljubivost i cene 30% niže od Alpa.</p>
+
+            <!-- Brze statistike: temp, sneg, otvorene staze, distanca -->
+            <div class="hero-quick-stats">
+                                <div class="qs-item">
+                    <span class="qs-label">Trenutno</span>
+                    <strong class="qs-val">-3°C</strong>
+                    <small class="qs-sub">Sunčano</small>
+                </div>
+                <div class="qs-item">
+                    <span class="qs-label">Sneg na vrhu</span>
+                    <strong class="qs-val">140 <em>cm</em></strong>
+                    <small class="qs-sub">dno 50 cm</small>
+                </div>
+                                                <div class="qs-item">
+                    <span class="qs-label">Otvorene staze</span>
+                    <strong class="qs-val">23/30</strong>
+                    <small class="qs-sub">žičara 12/14</small>
+                </div>
+                                <div class="qs-item">
+                    <span class="qs-label">Od Beograda</span>
+                    <strong class="qs-val">530 <em>km</em></strong>
+                    <small class="qs-sub">75 km staza ukupno</small>
+                </div>
+            </div>
+
+            <!-- Staze po boji — interaktivni hover sa SVG putanjama -->
+            <div class="interactive-list">
+                                <div class="slope-item" data-tip="plava">
+                    <div><span class="slope-name">Plave staze</span></div>
+                    <strong class="slope-km plava">
+                        35,0 km
+                    </strong>
+                </div>
+                                <div class="slope-item" data-tip="crvena">
+                    <div><span class="slope-name">Crvene staze</span></div>
+                    <strong class="slope-km crvena">
+                        30,0 km
+                    </strong>
+                </div>
+                                <div class="slope-item" data-tip="crna">
+                    <div><span class="slope-name">Crne staze</span></div>
+                    <strong class="slope-km crna">
+                        10,0 km
+                    </strong>
+                </div>
+                            </div>
+
+            <a href="#rcalc" class="hero-cta-calc">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="1" x2="7" y2="13"/><polyline points="3,9 7,13 11,9"/>
+                </svg>
+                Izračunaj cenu putovanja
+            </a>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         SCROLL CONTENT
+         ================================================================ -->
+    <section class="scroll-content">
+        <div class="container-wide">
+
+            <!-- I. SKI & INFO CENTAR (vreme + live staze status) -->
+                        <div class="reveal section-block" id="ski-info">
+                <span class="section-eyebrow">Realtime</span>
+                <h2 class="section-title">Ski <span>&amp; Info</span> Centar</h2>
+
+                <div class="ski-info-grid">
+
+                                        <div class="weather-panel reveal">
+                        <div class="weather-top">
+                            <div class="weather-temp-display">
+                                <span class="weather-temp-num">-3</span>
+                                <span class="weather-temp-unit">°C</span>
+                            </div>
+                            <div class="weather-conditions">
+                                <span class="weather-cond-label">Stanje</span>
+                                <span class="weather-cond-val">Sunčano</span>
+                            </div>
+                        </div>
+
+                        <div class="snow-levels">
+                            <div class="snow-level-item">
+                                <label>Sneg — dno</label>
+                                <div><span class="snow-level-val">50</span><span class="snow-level-unit">cm</span></div>
+                                <div class="snow-bar-wrap">
+                                    <div class="snow-bar-fill" style="width:25%"></div>
+                                </div>
+                            </div>
+                            <div class="snow-level-item">
+                                <label>Sneg — vrh</label>
+                                <div><span class="snow-level-val">140</span><span class="snow-level-unit">cm</span></div>
+                                <div class="snow-bar-wrap">
+                                    <div class="snow-bar-fill" style="width:46.666666666667%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="forecast-strip">
+                                                        <div class="forecast-day">
+                                <span class="forecast-day-name">PON</span>
+                                <span class="forecast-temp">
+                                    -3° <span>/ -7°</span>
+                                </span>
+                                <span class="forecast-stanje">Sunčano</span>
+                            </div>
+                                                        <div class="forecast-day">
+                                <span class="forecast-day-name">UTO</span>
+                                <span class="forecast-temp">
+                                    -2° <span>/ -5°</span>
+                                </span>
+                                <span class="forecast-stanje">Pretežno sunčano</span>
+                            </div>
+                                                        <div class="forecast-day">
+                                <span class="forecast-day-name">SRE</span>
+                                <span class="forecast-temp">
+                                    -1° <span>/ -4°</span>
+                                </span>
+                                <span class="forecast-stanje">Oblačno</span>
+                            </div>
+                                                    </div>
+                    </div>
+                    
+                                        <div class="live-status-panel reveal">
+                        <span class="live-badge">Live Status</span>
+                                                <div class="staze-bar-row">
+                            <div class="staze-bar-header">
+                                <span class="staze-type-label">
+                                    <span class="staze-dot plava"></span>
+                                    Plave staze                                </span>
+                                <span class="staze-count">
+                                    <strong>12</strong> / 15 otvoreno
+                                </span>
+                            </div>
+                            <div class="staze-progress-track">
+                                <div class="staze-progress-fill plava" style="width:80%;"></div>
+                            </div>
+                        </div>
+                                                <div class="staze-bar-row">
+                            <div class="staze-bar-header">
+                                <span class="staze-type-label">
+                                    <span class="staze-dot crvena"></span>
+                                    Crvene staze                                </span>
+                                <span class="staze-count">
+                                    <strong>8</strong> / 11 otvoreno
+                                </span>
+                            </div>
+                            <div class="staze-progress-track">
+                                <div class="staze-progress-fill crvena" style="width:73%;"></div>
+                            </div>
+                        </div>
+                                                <div class="staze-bar-row">
+                            <div class="staze-bar-header">
+                                <span class="staze-type-label">
+                                    <span class="staze-dot crna"></span>
+                                    Crne staze                                </span>
+                                <span class="staze-count">
+                                    <strong>3</strong> / 4 otvoreno
+                                </span>
+                            </div>
+                            <div class="staze-progress-track">
+                                <div class="staze-progress-fill crna" style="width:75%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="zicara-row">
+                            <span class="zicara-label">Žičare i gondole</span>
+                            <span class="zicara-status">
+                                <strong>12</strong> / 14 aktivnih
+                            </span>
+                        </div>
+
+                                                <div class="vidljivost-box">
+                            <p class="vidljivost-label">Vidljivost</p>
+                            <span class="vidljivost-val">Odlična (&gt;10 km)</span>
+                        </div>
+                                            </div>
+                    
+                </div>
+            </div>
+            
+            <!-- II. SMEŠTAJ -->
+                        <div class="reveal section-block" id="smestaj">
+                <span class="section-eyebrow">Partnerski objekti</span>
+                <h2 class="section-title">Raspoloživ <span>Smeštaj</span></h2>
+
+                <div class="hotel-grid">
+                                        <div class="hotel-card reveal">
+                        <div class="hotel-img-wrap">
+                            <img src="Slike/bansko/h1.jpg"
+                                 class="hotel-img" alt="Kempinski Grand Arena"
+                                 width="800" height="500" loading="lazy" decoding="async">
+                        </div>
+                        <div class="hotel-body">
+                            <div class="hotel-stars">
+                                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>                            </div>
+                            <h3 class="hotel-name">Kempinski Grand Arena</h3>
+                            <p class="hotel-meta">
+                                Kategorija 5★ · Kapacitet 2 osoba
+                            </p>
+                            <div class="hotel-price">
+                                €148                                <small>/ noć / osoba</small>
+                            </div>
+                        </div>
+                    </div>
+                                        <div class="hotel-card reveal">
+                        <div class="hotel-img-wrap">
+                            <img src="Slike/bansko/h2.jpg"
+                                 class="hotel-img" alt="Lucky Bansko Aparthotel"
+                                 width="800" height="500" loading="lazy" decoding="async">
+                        </div>
+                        <div class="hotel-body">
+                            <div class="hotel-stars">
+                                <span>★</span><span>★</span><span>★</span><span>★</span>                            </div>
+                            <h3 class="hotel-name">Lucky Bansko Aparthotel</h3>
+                            <p class="hotel-meta">
+                                Kategorija 4★ · Kapacitet 4 osoba
+                            </p>
+                            <div class="hotel-price">
+                                €74                                <small>/ noć / osoba</small>
+                            </div>
+                        </div>
+                    </div>
+                                        <div class="hotel-card reveal">
+                        <div class="hotel-img-wrap">
+                            <img src="Slike/bansko/h3.jpg"
+                                 class="hotel-img" alt="Hotel Strazhite"
+                                 width="800" height="500" loading="lazy" decoding="async">
+                        </div>
+                        <div class="hotel-body">
+                            <div class="hotel-stars">
+                                <span>★</span><span>★</span><span>★</span>                            </div>
+                            <h3 class="hotel-name">Hotel Strazhite</h3>
+                            <p class="hotel-meta">
+                                Kategorija 3★ · Kapacitet 2 osoba
+                            </p>
+                            <div class="hotel-price">
+                                €50                                <small>/ noć / osoba</small>
+                            </div>
+                        </div>
+                    </div>
+                                    </div>
+            </div>
+            
+            <!-- III. OPCIJE PREVOZA -->
+                        <div class="reveal section-block" id="prevoz">
+                <span class="section-eyebrow">Iz Beograda do staze</span>
+                <h2 class="section-title">Opcije <span>Prevoza</span></h2>
+
+                <div class="transport-grid">
+                                        <div class="transport-card bus reveal">
+                        <div class="transport-accent"></div>
+                        <div class="transport-body">
+                            <h3 class="transport-title">Bus</h3>
+                            <ul class="transport-info-list">
+                                                                <li>
+                                    <span>Polazak</span>
+                                    <strong>Sava Centar, 22:00h</strong>
+                                </li>
+                                                                <li>
+                                    <span>Trajanje</span>
+                                    <strong>~7h vožnje</strong>
+                                </li>
+                                                                <li>
+                                    <span>Povratak</span>
+                                    <strong>Nedeljom, 14:00h</strong>
+                                </li>
+                                                                <li>
+                                    <span>Prtljag</span>
+                                    <strong>Kofer + ski torba</strong>
+                                </li>
+                                                                <li>
+                                    <span>Cena karte</span>
+                                    <strong>45 EUR / osobi</strong>
+                                </li>
+                                                            </ul>
+                        </div>
+                    </div>
+                                        <div class="transport-card avion reveal">
+                        <div class="transport-accent"></div>
+                        <div class="transport-body">
+                            <h3 class="transport-title">Avion + Transfer</h3>
+                            <ul class="transport-info-list">
+                                                                <li>
+                                    <span>Aerodrom</span>
+                                    <strong>BEG - Najbliži</strong>
+                                </li>
+                                                                <li>
+                                    <span>Let</span>
+                                    <strong>~2h</strong>
+                                </li>
+                                                                <li>
+                                    <span>Transfer</span>
+                                    <strong>Aerodrom - Hotel</strong>
+                                </li>
+                                                                <li>
+                                    <span>Trajanje transfera</span>
+                                    <strong>~1.5h</strong>
+                                </li>
+                                                                <li>
+                                    <span>Paket cena</span>
+                                    <strong>180 EUR / osobi</strong>
+                                </li>
+                                                            </ul>
+                        </div>
+                    </div>
+                                        <div class="transport-card auto reveal">
+                        <div class="transport-accent"></div>
+                        <div class="transport-body">
+                            <h3 class="transport-title">Auto</h3>
+                            <ul class="transport-info-list">
+                                                                <li>
+                                    <span>Putarina</span>
+                                    <strong>36.00 EUR povratno</strong>
+                                </li>
+                                                                <li>
+                                    <span>Zimska oprema</span>
+                                    <strong>Obavezna</strong>
+                                </li>
+                                                                <li>
+                                    <span>Granični prelaz</span>
+                                    <strong>Gradina</strong>
+                                </li>
+                                                            </ul>
+                        </div>
+                    </div>
+                                    </div>
+            </div>
+            
+            <!-- IV. RICH KALKULATOR (zaključana destinacija) -->
+            <section class="rcalc-section" id="rcalc">
+    <div class="rcalc-wrap reveal">
+        <div class="rcalc-header">
+            <span class="rcalc-eyebrow">Snowbase Kalkulator</span>
+            <h2 class="rcalc-title">Sastavite <span>vaše putovanje</span></h2>
+            <p class="rcalc-subtitle">
+                Izaberite destinaciju, trajanje, broj putnika, hotel i tip prevoza —
+                vidite ukupan iznos u realnom vremenu.
+            </p>
+        </div>
+
+        <div class="rcalc-grid">
+            <!-- =================== KOLONA 1 — IZBORI =================== -->
+            <div class="rcalc-form">
+
+                <!-- 1. DESTINACIJA -->
+                <div class="rcalc-block">
+                    <span class="rcalc-step-num">1</span>
+                    <label class="rcalc-block-label">Destinacija</label>
+                                            <div class="rcalc-locked-dest">
+                            <strong>Bansko</strong>
+                            <small>destinacija je već izabrana</small>
+                        </div>
+                        <input type="hidden" id="rc-dest" value="8">
+                                    </div>
+
+                <!-- 2. TRAJANJE -->
+                <div class="rcalc-block">
+                    <span class="rcalc-step-num">2</span>
+                    <label class="rcalc-block-label">Trajanje boravka</label>
+                    <div class="rcalc-segments" id="rc-duration">
+                        <button type="button" class="rcalc-seg active" data-dani="2" data-label="Vikend">
+                            <span class="seg-top">Vikend</span><span class="seg-sub">2 dana</span>
+                        </button>
+                        <button type="button" class="rcalc-seg" data-dani="5" data-label="5 dana">
+                            <span class="seg-top">5 dana</span><span class="seg-sub">radni</span>
+                        </button>
+                        <button type="button" class="rcalc-seg" data-dani="7" data-label="Nedelja">
+                            <span class="seg-top">Nedelja</span><span class="seg-sub">7 dana</span>
+                        </button>
+                        <button type="button" class="rcalc-seg" data-dani="10" data-label="Produženi">
+                            <span class="seg-top">Produženi</span><span class="seg-sub">10 dana</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. PUTNICI -->
+                <div class="rcalc-block">
+                    <span class="rcalc-step-num">3</span>
+                    <label class="rcalc-block-label">Broj putnika po kategoriji</label>
+                    <div class="rcalc-people-grid">
+                        <div class="rcalc-person">
+                            <span class="rcalc-person-label">Odrasli</span>
+                            <input type="number" class="rcalc-person-input" data-kat="Odrasli" value="2" min="0" max="20">
+                        </div>
+                        <div class="rcalc-person">
+                            <span class="rcalc-person-label">Studenti</span>
+                            <input type="number" class="rcalc-person-input" data-kat="Studenti" value="0" min="0" max="20">
+                        </div>
+                        <div class="rcalc-person">
+                            <span class="rcalc-person-label">Deca <small>(do 12g)</small></span>
+                            <input type="number" class="rcalc-person-input" data-kat="Deca" value="0" min="0" max="20">
+                        </div>
+                        <div class="rcalc-person">
+                            <span class="rcalc-person-label">Senior <small>(65+)</small></span>
+                            <input type="number" class="rcalc-person-input" data-kat="Senior" value="0" min="0" max="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. HOTEL -->
+                <div class="rcalc-block">
+                    <span class="rcalc-step-num">4</span>
+                    <label class="rcalc-block-label">Smeštaj</label>
+                    <div class="rcalc-select-wrap">
+                        <select id="rc-hotel" class="rcalc-select">
+                            <!-- popunjava se JS-om kad se promeni destinacija -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 5. PREVOZ -->
+                <div class="rcalc-block">
+                    <span class="rcalc-step-num">5</span>
+                    <label class="rcalc-block-label">Tip prevoza</label>
+                    <div class="rcalc-transport" id="rc-transport">
+                        <label class="rcalc-tr-card">
+                            <input type="radio" name="rc-tr" value="auto" checked>
+                            <div class="rcalc-tr-card-inner">
+                                <span class="rcalc-tr-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5"/><circle cx="7" cy="16" r="2"/><circle cx="17" cy="16" r="2"/><path d="M5 13h14v3H5z"/></svg>
+                                </span>
+                                <div class="rcalc-tr-meta">
+                                    <strong>Auto</strong>
+                                    <small>Gorivo + putarina</small>
+                                </div>
+                                <span class="rcalc-tr-price" id="rc-tr-auto-price">€0</span>
+                            </div>
+                        </label>
+                        <label class="rcalc-tr-card">
+                            <input type="radio" name="rc-tr" value="bus">
+                            <div class="rcalc-tr-card-inner">
+                                <span class="rcalc-tr-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="14" rx="2"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/><line x1="4" y1="11" x2="20" y2="11"/></svg>
+                                </span>
+                                <div class="rcalc-tr-meta">
+                                    <strong>Bus</strong>
+                                    <small>Agencijski autobus</small>
+                                </div>
+                                <span class="rcalc-tr-price" id="rc-tr-bus-price">€0</span>
+                            </div>
+                        </label>
+                        <label class="rcalc-tr-card">
+                            <input type="radio" name="rc-tr" value="avion">
+                            <div class="rcalc-tr-card-inner">
+                                <span class="rcalc-tr-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12l8-2 1-6 2 0 1 6 8 2v2l-8-2-1 6 2 1v1l-3-1-3 1v-1l2-1-1-6-8 2z"/></svg>
+                                </span>
+                                <div class="rcalc-tr-meta">
+                                    <strong>Avion + Transfer</strong>
+                                    <small>Najbrža opcija</small>
+                                </div>
+                                <span class="rcalc-tr-price" id="rc-tr-avion-price">€0</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Auto sub-options (potrosnja + cena goriva) -->
+                    <div class="rcalc-auto-extras" id="rc-auto-extras">
+                        <div class="rcalc-mini-input">
+                            <label>Potrošnja (L/100km)</label>
+                            <input type="number" id="rc-potrosnja" value="7.0" step="0.1" min="3" max="20">
+                        </div>
+                        <div class="rcalc-mini-input">
+                            <label>Cena goriva (€/L)</label>
+                            <input type="number" id="rc-cena-goriva" value="1.65" step="0.05" min="0.5" max="5">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =================== KOLONA 2 — REZULTAT =================== -->
+            <aside class="rcalc-result">
+                <div class="rcalc-result-card">
+                    <span class="rcalc-result-eyebrow">Procena ukupno</span>
+                    <div class="rcalc-result-total" id="rc-total">€0</div>
+                    <small class="rcalc-result-meta" id="rc-meta">izaberite parametre</small>
+
+                    <div class="rcalc-result-divider"></div>
+
+                    <div class="rcalc-result-row">
+                        <span class="rr-label">Smeštaj</span>
+                        <span class="rr-value" id="rc-r-hotel">€0</span>
+                    </div>
+                    <small class="rcalc-result-hint" id="rc-h-hotel">—</small>
+
+                    <div class="rcalc-result-row">
+                        <span class="rr-label">Ski pas</span>
+                        <span class="rr-value" id="rc-r-pas">€0</span>
+                    </div>
+                    <small class="rcalc-result-hint" id="rc-h-pas">—</small>
+
+                    <div class="rcalc-result-row">
+                        <span class="rr-label">Prevoz</span>
+                        <span class="rr-value" id="rc-r-tr">€0</span>
+                    </div>
+                    <small class="rcalc-result-hint" id="rc-h-tr">—</small>
+
+                    <a href="#" id="rc-cta" class="rcalc-result-cta">Pogledaj destinaciju →</a>
+                    <small class="rcalc-disclaimer">Procena se računa lokalno na osnovu cenovnika iz baze. Final cena se potvrđuje pri rezervaciji.</small>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<script>
+(function(){
+    const CALC = {"1":{"naziv":"Les Orres","slug":"les-orres","distanca":1580,"putarina":110,"hoteli":[{"id":1,"naziv":"Hôtel Le Mélèze","tip":"hotel","zvezdice":4,"cena":98},{"id":2,"naziv":"Résidence Les Crêtes","tip":"apartman","zvezdice":3,"cena":72},{"id":3,"naziv":"Chalet du Sommet","tip":"chalet","zvezdice":5,"cena":185}],"pas":{"Odrasli":{"d1":44,"d2":82,"d3":118,"d5":175,"d6":198,"d7":222},"Studenti":{"d1":37,"d2":68,"d3":100,"d5":148,"d6":168,"d7":188},"Deca":{"d1":26,"d2":48,"d3":72,"d5":105,"d6":118,"d7":132},"Senior":{"d1":34,"d2":64,"d3":92,"d5":138,"d6":156,"d7":175}},"transport":{"bus":134,"avion":250,"auto":0}},"2":{"naziv":"Chamonix-Mont-Blanc","slug":"chamonix","distanca":1530,"putarina":115,"hoteli":[{"id":4,"naziv":"Hôtel Mont-Blanc","tip":"hotel","zvezdice":5,"cena":245},{"id":5,"naziv":"Auberge du Bois Prin","tip":"hotel","zvezdice":4,"cena":145},{"id":6,"naziv":"Chamonix Lodge","tip":"pansion","zvezdice":3,"cena":88}],"pas":{"Odrasli":{"d1":68,"d2":128,"d3":184,"d5":270,"d6":312,"d7":340},"Studenti":{"d1":58,"d2":108,"d3":156,"d5":230,"d6":266,"d7":290},"Deca":{"d1":40,"d2":74,"d3":112,"d5":165,"d6":190,"d7":210},"Senior":{"d1":58,"d2":108,"d3":156,"d5":230,"d6":266,"d7":290}},"transport":{"bus":130,"avion":250,"auto":0}},"3":{"naziv":"Val Thorens","slug":"val-thorens","distanca":1620,"putarina":120,"hoteli":[{"id":7,"naziv":"Altapura Hotel","tip":"hotel","zvezdice":5,"cena":325},{"id":8,"naziv":"Résidence Le Cheval Blanc","tip":"apartman","zvezdice":4,"cena":160}],"pas":{"Odrasli":{"d1":72,"d2":138,"d3":198,"d5":295,"d6":348,"d7":378},"Studenti":{"d1":60,"d2":116,"d3":168,"d5":250,"d6":296,"d7":322},"Deca":{"d1":42,"d2":80,"d3":118,"d5":175,"d6":208,"d7":226},"Senior":{"d1":64,"d2":122,"d3":175,"d5":262,"d6":310,"d7":336}},"transport":{"bus":138,"avion":250,"auto":0}},"6":{"naziv":"St. Anton am Arlberg","slug":"st-anton","distanca":1025,"putarina":65,"hoteli":[{"id":9,"naziv":"Hotel Schwarzer Adler","tip":"hotel","zvezdice":4,"cena":185},{"id":10,"naziv":"Hotel Karl Schranz","tip":"hotel","zvezdice":4,"cena":168},{"id":11,"naziv":"Pension Daniela","tip":"pansion","zvezdice":3,"cena":78}],"pas":{"Odrasli":{"d1":67,"d2":128,"d3":186,"d5":274,"d6":318,"d7":345},"Studenti":{"d1":60,"d2":114,"d3":168,"d5":248,"d6":286,"d7":310},"Deca":{"d1":34,"d2":64,"d3":94,"d5":138,"d6":160,"d7":174},"Senior":{"d1":60,"d2":114,"d3":168,"d5":248,"d6":286,"d7":310}},"transport":{"bus":87,"avion":250,"auto":0}},"7":{"naziv":"Kopaonik","slug":"kopaonik","distanca":280,"putarina":0,"hoteli":[{"id":12,"naziv":"Grand Hotel & Spa","tip":"hotel","zvezdice":4,"cena":98},{"id":13,"naziv":"MK Mountain Resort","tip":"hotel","zvezdice":4,"cena":88},{"id":14,"naziv":"Apartmani Konaci","tip":"apartman","zvezdice":3,"cena":56}],"pas":{"Odrasli":{"d1":40,"d2":74,"d3":106,"d5":158,"d6":185,"d7":205},"Studenti":{"d1":33,"d2":62,"d3":90,"d5":134,"d6":158,"d7":175},"Deca":{"d1":23,"d2":44,"d3":62,"d5":94,"d6":110,"d7":122},"Senior":{"d1":31,"d2":58,"d3":84,"d5":124,"d6":148,"d7":164}},"transport":{"bus":24,"avion":0,"auto":0}},"8":{"naziv":"Bansko","slug":"bansko","distanca":530,"putarina":18,"hoteli":[{"id":15,"naziv":"Kempinski Grand Arena","tip":"hotel","zvezdice":5,"cena":148},{"id":16,"naziv":"Lucky Bansko Aparthotel","tip":"apartman","zvezdice":4,"cena":74},{"id":17,"naziv":"Hotel Strazhite","tip":"hotel","zvezdice":3,"cena":50}],"pas":{"Odrasli":{"d1":45,"d2":84,"d3":122,"d5":178,"d6":208,"d7":228},"Studenti":{"d1":38,"d2":72,"d3":104,"d5":152,"d6":176,"d7":196},"Deca":{"d1":25,"d2":47,"d3":68,"d5":98,"d6":116,"d7":128},"Senior":{"d1":38,"d2":72,"d3":104,"d5":152,"d6":176,"d7":196}},"transport":{"bus":45,"avion":180,"auto":0}}};
+    const LOCKED = true;
+
+    /* DOM refs */
+    const $dest    = document.getElementById('rc-dest');
+    const $hotel   = document.getElementById('rc-hotel');
+    const $durBtns = document.querySelectorAll('#rc-duration .rcalc-seg');
+    const $people  = document.querySelectorAll('.rcalc-person-input');
+    const $trRads  = document.querySelectorAll('input[name="rc-tr"]');
+    const $autoBox = document.getElementById('rc-auto-extras');
+    const $potr    = document.getElementById('rc-potrosnja');
+    const $cenaG   = document.getElementById('rc-cena-goriva');
+
+    const $rTotal  = document.getElementById('rc-total');
+    const $rMeta   = document.getElementById('rc-meta');
+    const $rHotel  = document.getElementById('rc-r-hotel');
+    const $rPas    = document.getElementById('rc-r-pas');
+    const $rTr     = document.getElementById('rc-r-tr');
+    const $hHotel  = document.getElementById('rc-h-hotel');
+    const $hPas    = document.getElementById('rc-h-pas');
+    const $hTr     = document.getElementById('rc-h-tr');
+    const $cta     = document.getElementById('rc-cta');
+    const $prAuto  = document.getElementById('rc-tr-auto-price');
+    const $prBus   = document.getElementById('rc-tr-bus-price');
+    const $prAvion = document.getElementById('rc-tr-avion-price');
+
+    /* state */
+    let curr = {
+        destId: parseInt($dest.value, 10),
+        dani: 2,
+        daniLabel: 'Vikend',
+        hotelIdx: 0,
+        tr: 'auto',
+    };
+
+    /* Helpers */
+    function eur(n) { return '€' + Math.round(n).toLocaleString('sr-RS'); }
+    function fillHotels() {
+        const dest = CALC[curr.destId];
+        if (!dest) return;
+        $hotel.innerHTML = '';
+        dest.hoteli.forEach((h, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            const stars = '★'.repeat(h.zvezdice);
+            const tip = h.tip.charAt(0).toUpperCase() + h.tip.slice(1);
+            opt.textContent = `${h.naziv} · ${stars} ${tip} · €${h.cena}/noć`;
+            $hotel.appendChild(opt);
+        });
+        curr.hotelIdx = 0;
+    }
+    function pasPriceFor(katObj, dani) {
+        if (!katObj) return 0;
+        const key = 'd' + dani;
+        if (katObj[key] !== undefined) return katObj[key];
+        /* fallback: nije u tabeli — derivacija */
+        if (dani > 7) return katObj.d7 + (dani - 7) * katObj.d1;
+        return katObj.d1 * dani;
+    }
+    function calc() {
+        const dest = CALC[curr.destId];
+        if (!dest) return;
+
+        /* Smeštaj */
+        const hotel = dest.hoteli[curr.hotelIdx];
+        const peopleByKat = {};
+        let totalPeople = 0;
+        $people.forEach(p => {
+            const n = Math.max(0, parseInt(p.value, 10) || 0);
+            peopleByKat[p.dataset.kat] = n;
+            totalPeople += n;
+        });
+        if (totalPeople === 0) totalPeople = 1;
+
+        const hotelTotal = hotel ? hotel.cena * curr.dani * totalPeople : 0;
+
+        /* Ski pas — po kategoriji */
+        let pasTotal = 0;
+        const pasBreakdown = [];
+        Object.keys(peopleByKat).forEach(kat => {
+            const n = peopleByKat[kat];
+            if (n === 0) return;
+            const katObj = dest.pas[kat];
+            const price = pasPriceFor(katObj, curr.dani) * n;
+            pasTotal += price;
+            pasBreakdown.push(`${n}× ${kat}`);
+        });
+
+        /* Prevoz — izracunaj sve tri preview cene za kartice */
+        const potrosnja = parseFloat($potr.value) || 7;
+        const cenaG     = parseFloat($cenaG.value) || 1.65;
+        const autoCena  = (dest.distanca * 2 / 100) * potrosnja * cenaG + (dest.putarina * 2);
+        const busCena   = (dest.transport.bus   || 0) * totalPeople;
+        const avionCena = (dest.transport.avion || 0) * totalPeople;
+
+        $prAuto.textContent  = eur(autoCena);
+        $prBus.textContent   = eur(busCena);
+        $prAvion.textContent = avionCena === 0 ? '—' : eur(avionCena);
+
+        /* Aktivni izbor za detaljni breakdown desno */
+        let trTotal = 0, trDesc = '';
+        if (curr.tr === 'auto') {
+            const gorivo = (dest.distanca * 2 / 100) * potrosnja * cenaG;
+            const putar  = dest.putarina * 2;
+            trTotal = gorivo + putar;
+            trDesc = `${dest.distanca * 2} km povratno · gorivo €${gorivo.toFixed(0)} · putarina €${putar.toFixed(0)}`;
+        } else if (curr.tr === 'bus') {
+            const cenaPo = dest.transport.bus || 0;
+            trTotal = cenaPo * totalPeople;
+            trDesc = `€${cenaPo}/osobi × ${totalPeople} ${totalPeople === 1 ? 'osoba' : 'osoba'}`;
+        } else if (curr.tr === 'avion') {
+            const cenaPo = dest.transport.avion || 0;
+            trTotal = cenaPo * totalPeople;
+            trDesc = cenaPo === 0
+                ? 'Nije primenljivo (domaća destinacija)'
+                : `€${cenaPo}/osobi × ${totalPeople} (avion + transfer)`;
+        }
+
+        const total = hotelTotal + pasTotal + trTotal;
+
+        /* Render */
+        $rTotal.textContent = eur(total);
+        $rMeta.textContent  = `${curr.daniLabel} · ${totalPeople} ${totalPeople === 1 ? 'putnik' : 'putnika'} · ${dest.naziv}`;
+        $rHotel.textContent = eur(hotelTotal);
+        $rPas.textContent   = eur(pasTotal);
+        $rTr.textContent    = eur(trTotal);
+        $hHotel.textContent = hotel ? `${hotel.naziv} · €${hotel.cena}/noć × ${curr.dani} × ${totalPeople}` : '—';
+        $hPas.textContent   = pasBreakdown.length ? `${pasBreakdown.join(' · ')} · ${curr.dani} dana` : 'nijedan putnik';
+        $hTr.textContent    = trDesc;
+        $cta.href           = 'destinacija-' + curr.destId + '.html';
+
+        /* Sakrij auto extras kad nije auto */
+        $autoBox.style.display = curr.tr === 'auto' ? 'grid' : 'none';
+    }
+
+    /* Bindovanja */
+    $dest.addEventListener('change', () => {
+        curr.destId = parseInt($dest.value, 10);
+        fillHotels();
+        calc();
+    });
+    $hotel.addEventListener('change', () => {
+        curr.hotelIdx = parseInt($hotel.value, 10);
+        calc();
+    });
+    $durBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            $durBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            curr.dani = parseInt(btn.dataset.dani, 10);
+            curr.daniLabel = btn.dataset.label;
+            calc();
+        });
+    });
+    $people.forEach(p => p.addEventListener('input', calc));
+    $trRads.forEach(r => r.addEventListener('change', () => {
+        curr.tr = r.value;
+        document.querySelectorAll('.rcalc-tr-card').forEach(c => {
+            c.classList.toggle('selected', c.contains(r) && r.checked);
+        });
+        calc();
+    }));
+    $potr.addEventListener('input', calc);
+    $cenaG.addEventListener('input', calc);
+
+    /* Init */
+    fillHotels();
+    /* selected styling za default radio */
+    document.querySelectorAll('.rcalc-tr-card').forEach(c => {
+        const r = c.querySelector('input[type="radio"]');
+        if (r && r.checked) c.classList.add('selected');
+    });
+    calc();
+})();
+</script>
+
+            <!-- V. SKI PAS — transparentni cenovnik -->
+                        <div class="reveal section-block section-block-top" id="ski-pas">
+                <span class="section-eyebrow">Transparentne cene</span>
+                <h2 class="section-title">Cene <span>Ski Pasa</span></h2>
+                <p class="pas-intro">Cene po kategoriji i trajanju. Ukupan iznos za vašu grupu pogledajte u kalkulatoru iznad.</p>
+
+                <div class="pas-table-wrap reveal">
+                    <table class="pas-table">
+                        <thead>
+                            <tr>
+                                <th>Kategorija</th>
+                                <th>1 dan</th>
+                                <th>2 dana</th>
+                                <th>3 dana</th>
+                                <th>5 dana</th>
+                                <th class="best">6 dana</th>
+                                <th>7 dana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                                        <tr>
+                                <td>Odrasli</td>
+                                <td>€45</td>
+                                <td>€84</td>
+                                <td>€122</td>
+                                <td>€178</td>
+                                <td class="best-col">€208</td>
+                                <td>€228</td>
+                            </tr>
+                                                        <tr>
+                                <td>Studenti</td>
+                                <td>€38</td>
+                                <td>€72</td>
+                                <td>€104</td>
+                                <td>€152</td>
+                                <td class="best-col">€176</td>
+                                <td>€196</td>
+                            </tr>
+                                                        <tr>
+                                <td>Deca</td>
+                                <td>€25</td>
+                                <td>€47</td>
+                                <td>€68</td>
+                                <td>€98</td>
+                                <td class="best-col">€116</td>
+                                <td>€128</td>
+                            </tr>
+                                                        <tr>
+                                <td>Senior</td>
+                                <td>€38</td>
+                                <td>€72</td>
+                                <td>€104</td>
+                                <td>€152</td>
+                                <td class="best-col">€176</td>
+                                <td>€196</td>
+                            </tr>
+                                                    </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- VI. OPREMA & ŠKOLA -->
+                        <div class="reveal section-block" id="oprema">
+                <span class="section-eyebrow">Agencijski paketi</span>
+                <h2 class="section-title">Oprema <span>&amp; Škola</span></h2>
+
+                <div class="equipment-section-grid">
+
+                                        <div>
+                        <p class="equipment-intro">
+                            Rentiranje kompletne opreme direktno kroz agenciju — bez čekanja u redu na skijalištima.
+                        </p>
+                        <div class="equipment-cards">
+                                                        <div class="equipment-card ekonomicni reveal">
+                                                                    <span class="equipment-badge">Ekonomični</span>
+                                                                <h3 class="equipment-name">Starter Komplet</h3>
+                                                                    <p class="equipment-desc">Idealno za početnike i rekreativce. Proverena oprema renomirane klase.</p>
+                                                                                                <ul class="equipment-includes">
+                                                                            <li>Skije (all-mountain, početni nivo)</li>
+                                                                            <li>Pancerice (toplinski podstavljene)</li>
+                                                                            <li>Štapovi + kaiš za zapešće</li>
+                                                                            <li>Kaciga (EN 1077 certifikat)</li>
+                                                                    </ul>
+                                                                <div class="equipment-price-row">
+                                    <div>
+                                        <div class="equipment-price">€22</div>
+                                        <div class="equipment-period">po danu / po osobi</div>
+                                    </div>
+                                                                            <div class="equipment-note">
+                                            Min. 2 dana                                        </div>
+                                                                    </div>
+                            </div>
+                                                        <div class="equipment-card premium reveal">
+                                                                    <span class="equipment-badge">Premium</span>
+                                                                <h3 class="equipment-name">Expert Performance</h3>
+                                                                    <p class="equipment-desc">Napredni modeli skija za iskusne skijaše koji traže preciznost i kontrolu na svakom terenu.</p>
+                                                                                                <ul class="equipment-includes">
+                                                                            <li>Race/Freeride skije</li>
+                                                                            <li>Pancerice (race-fit, carbon vložak)</li>
+                                                                            <li>Štapovi od karbona</li>
+                                                                            <li>Kaciga + zaštitne naočare</li>
+                                                                            <li>Zaštitni šorts i back protektor</li>
+                                                                    </ul>
+                                                                <div class="equipment-price-row">
+                                    <div>
+                                        <div class="equipment-price">€38</div>
+                                        <div class="equipment-period">po danu / po osobi</div>
+                                    </div>
+                                                                            <div class="equipment-note recommend">
+                                            Preporučujemo                                        </div>
+                                                                    </div>
+                            </div>
+                                                    </div>
+                    </div>
+                    
+                                        <div class="ski-school-panel reveal">
+                        <span class="section-eyebrow eyebrow-tight">Škola skijanja</span>
+                        <h3 class="ski-school-title">Čas sa <span>instruktorom</span></h3>
+                        <p class="ski-school-intro">Licencirani instruktori skijanja i snowboarda. Rezervacija min. 48h unapred.</p>
+
+                        <div class="school-packages">
+                                                        <div class="school-package">
+                                <div>
+                                    <div class="school-package-name">Grupni čas (do 6 osoba)</div>
+                                                                            <div class="school-package-desc">2h · Svi nivoi · Srpski / Engleski</div>
+                                                                    </div>
+                                <div class="school-package-price">
+                                    <strong>€18</strong>
+                                    <span>/ osobi</span>
+                                </div>
+                            </div>
+                                                        <div class="school-package">
+                                <div>
+                                    <div class="school-package-name">Individualni čas</div>
+                                                                            <div class="school-package-desc">2h · Personalizovani program</div>
+                                                                    </div>
+                                <div class="school-package-price">
+                                    <strong>€65</strong>
+                                    <span>/ čas</span>
+                                </div>
+                            </div>
+                                                        <div class="school-package">
+                                <div>
+                                    <div class="school-package-name">5-dnevni grupni kurs</div>
+                                                                            <div class="school-package-desc">2h dnevno · Sve uzraste · Sertifikat</div>
+                                                                    </div>
+                                <div class="school-package-price">
+                                    <strong>€72</strong>
+                                    <span>/ osobi</span>
+                                </div>
+                            </div>
+                                                        <div class="school-package">
+                                <div>
+                                    <div class="school-package-name">Snowboard starter</div>
+                                                                            <div class="school-package-desc">3h · Početnici · Oprema uključena</div>
+                                                                    </div>
+                                <div class="school-package-price">
+                                    <strong>€48</strong>
+                                    <span>/ osobi</span>
+                                </div>
+                            </div>
+                                                    </div>
+
+                        <div class="school-note">
+                            Za grupe 6+ osoba odobravamo 15% popusta na sve pakete opreme i školu skijanja.
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- VII. RECENZIJE -->
+                        <div class="reveal section-block" id="utisci">
+                <span class="section-eyebrow">Verifikovani putnici</span>
+                <h2 class="section-title">Iskustva <span>Putnika</span></h2>
+
+                <div class="reviews-grid">
+                                        <div class="review-card reveal">
+                        <div class="review-stars">
+                            <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>                                                    </div>
+                                                <div class="review-tags">
+                                                            <span class="review-tag">Staze ★★★★★</span>
+                                                            <span class="review-tag">Organizacija ★★★★★</span>
+                                                    </div>
+                                                <p class="review-text">Savršeno organizovan put. Staze prelepe, hotel taman koliko nam treba. Ekipa Snowbase brza i profesionalna.</p>
+                        <div class="review-footer">
+                            <div>
+                                <div class="review-author">Marko D.</div>
+                                <div class="review-date">Januar 2026.</div>
+                            </div>
+                            <div class="review-check">✓</div>
+                        </div>
+                    </div>
+                                        <div class="review-card reveal">
+                        <div class="review-stars">
+                            <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>                                                    </div>
+                                                <div class="review-tags">
+                                                            <span class="review-tag">Porodično ★★★★★</span>
+                                                            <span class="review-tag">Smeštaj ★★★★☆</span>
+                                                    </div>
+                                                <p class="review-text">Treća sezona zaredom. Cena je fer, kvalitet izuzetan. Ski škola savršena za našu decu — preporučujemo svima.</p>
+                        <div class="review-footer">
+                            <div>
+                                <div class="review-author">Jelena &amp; Vuk</div>
+                                <div class="review-date">Februar 2026.</div>
+                            </div>
+                            <div class="review-check">✓</div>
+                        </div>
+                    </div>
+                                    </div>
+            </div>
+            
+        </div>
+    </section>
+</div>
+
+<script>
+/* ---- Slope hover → aktivira sve <path> sa tom klasom ---- */
+document.querySelectorAll('.slope-item').forEach(item => {
+    const klasa = item.dataset.tip;
+    const paths = document.querySelectorAll('.staza.' + klasa);
+    item.addEventListener('mouseenter', () => paths.forEach(p => p.classList.add('active')));
+    item.addEventListener('mouseleave', () => paths.forEach(p => p.classList.remove('active')));
+});
+
+/* ---- Hero fade na scroll + nav scrolled state (rAF throttled) ---- */
+const hero = document.getElementById('hero');
+const nav  = document.getElementById('main-nav');
+let scrollTicking = false;
+window.addEventListener('scroll', () => {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(() => {
+        const y = window.scrollY;
+        nav?.classList.toggle('scrolled',  y > 40);
+        hero?.classList.toggle('scrolled', y > 80);
+        scrollTicking = false;
+    });
+}, { passive: true });
+
+/* ---- Reveal animacije (IntersectionObserver) ---- */
+const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObs.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+</script>
+
+<footer class="site-footer">
+
+    <div class="footer-mountains" aria-hidden="true">
+        <svg viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="footerMtnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#00ccff"/>
+                    <stop offset="50%" style="stop-color:#7c6fff"/>
+                    <stop offset="100%" style="stop-color:#00ccff"/>
+                </linearGradient>
+            </defs>
+            <path d="M0 120 L200 40 L380 80 L560 20 L740 65 L900 35 L1080 70 L1260 30 L1440 55 L1440 120 Z"
+                  fill="url(#footerMtnGrad)"/>
+        </svg>
+    </div>
+
+    <div class="footer-inner">
+
+        <div class="footer-top">
+
+            <div class="footer-brand-wrap">
+                <a href="index.html" class="brand">
+    <svg class="brand-icon" viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- M-planina: levo peak srednji, sredinski dip, desno peak najvisi (sa tackom) -->
+        <path d="M3 27 L13 15 L18 20 L26 6 L34 27"
+              fill="none"
+              stroke="var(--ice)"
+              stroke-width="2.6"
+              stroke-linejoin="round"
+              stroke-linecap="round"/>
+        <!-- Tacka na vrhu viseg peaka -->
+        <circle cx="26" cy="6" r="1.7" fill="var(--ice)"/>
+    </svg>
+    <span class="brand-text">
+        SNOW<span class="brand-text-dot">·</span>BASE
+    </span>
+</a>
+                <p class="footer-tagline">
+                    Premium ski katalog za one koji traže više od skijališta —
+                    od Beograda do Alpskih vrhova s kompletnom logistikom.
+                </p>
+                <div class="footer-badges">
+                    <span class="footer-badge footer-badge-ice">Alpine Travel</span>
+                    <span class="footer-badge footer-badge-aurora">Premium</span>
+                    <span class="footer-badge">Beograd → Alpi</span>
+                </div>
+            </div>
+
+            <div class="footer-nav-grid">
+
+                <div class="footer-col">
+                    <h4 class="footer-col-title">Destinacije</h4>
+                    <a href="index.html#katalog">Ski Katalog</a>
+                    <a href="index.html#mapa">Mapa Evrope</a>
+                    <a href="index.html#rcalc">Kalkulator</a>
+                    <a href="index.html#utisci">Utisci putnika</a>
+                </div>
+
+                <div class="footer-col">
+                    <h4 class="footer-col-title">Premium Partneri</h4>
+                    <a href="https://www.elanskis.com/" target="_blank" rel="noopener" class="aurora-link">Elan Skis</a>
+                    <a href="https://www.fischersports.com/" target="_blank" rel="noopener" class="aurora-link">Fischer Sports</a>
+                    <a href="https://www.salomon.com/" target="_blank" rel="noopener" class="aurora-link">Salomon</a>
+                    <a href="https://www.bogner.com/" target="_blank" rel="noopener" class="aurora-link">Bogner</a>
+                </div>
+
+                <div class="footer-col">
+                    <h4 class="footer-col-title">Informacije</h4>
+                    <a href="index.html#partneri">Partnerstvo</a>
+                    <span>Beograd, Srbija</span>
+                    <span>info@snowbase.rs</span>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p class="footer-copy">
+                © 2026 <strong>Snowbase</strong>. Sva prava zadržana.
+            </p>
+            <div class="footer-legal">
+                <a href="#">Pravila privatnosti</a>
+                <a href="#">Uslovi korišćenja</a>
+            </div>
+            <p class="footer-made">
+                Napravljeno s <span>&#10052;</span> za planine
+            </p>
+        </div>
+
+    </div>
+</footer>
+</body>
+</html>
