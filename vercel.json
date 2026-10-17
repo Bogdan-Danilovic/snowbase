@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "cp -r Slike \"style 3.0.css\" public/",
+  "outputDirectory": "public",
+  "redirects": [
+    {
+      "source": "/index.php",
+      "destination": "/"
+    },
+    {
+      "source": "/destinacija.php",
+      "has": [
+        {
+          "type": "query",
+          "key": "id",
+          "value": "(?<id>\\d+)"
+        }
+      ],
+      "destination": "/destinacija-:id.html"
+    }
+  ]
+}
